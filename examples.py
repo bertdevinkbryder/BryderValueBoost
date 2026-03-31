@@ -25,8 +25,6 @@ from woningwaardering.vera.referentiedata import (
 )
 
 
-# print(list(Bouwkundigelementsoort))
-# print(list(Bouwkundigelementdetailsoort))
 API_URL = "http://localhost:8000"
 
 SIMPLE = {
@@ -106,6 +104,125 @@ SIMPLE = {
     "monumenten": []
 },
 
+    "peildatum": str(date.today())
+}
+
+
+# Better example with missing elements to trigger improvement suggestions
+OPTIMIZATION_READY = {
+    "eenheid_data": {
+        "id": "opt_unit_001",
+        "bouwjaar": 1975,
+        "gebruiksoppervlakte": 120,
+        "woningwaarderingstelsel": {"code": "ZEL"},
+        "adres": {
+            "straatnaam": "Optimalisatielaan",
+            "huisnummer": "42",
+            "postcode": "5678CD",
+            "woonplaats": {"naam": "Utrecht"}
+        },
+        "panden": [
+            {
+                "soort": {"code": "EGW"}
+            }
+        ],
+        "ruimten": [
+            {
+                "id": "bedroom_1",
+                "soort": {"code": "VTK"},
+                "detail_soort": {"code": "SLA"},
+                "naam": "Master Bedroom",
+                "oppervlakte": 20,
+                "inhoud": 50,
+                "verwarmd": True
+            },
+            {
+                "id": "bedroom_2",
+                "soort": {"code": "VTK"},
+                "detail_soort": {"code": "SLA"},
+                "naam": "Second Bedroom",
+                "oppervlakte": 12,
+                "inhoud": 30,
+                "verwarmd": False  # Unheated room - can suggest heating
+            },
+            {
+                "id": "kitchen_1",
+                "soort": {"code": "VTK"},
+                "detail_soort": {"code": "KEU"},
+                "naam": "Kitchen",
+                "oppervlakte": 12,
+                "inhoud": 30,
+                "verwarmd": True,
+                "bouwkundige_elementen": [
+                    {
+                        "id": "elem_aanrecht_1",
+                        "naam": "Aanrecht",
+                        "soort": {"code": "VOO"},
+                        "detail_soort": {"code": "AAN"},
+                        "lengte": 1200
+                    }
+                    # Missing: Spoelbak (sink) - can suggest adding
+                    # Missing: Kast (cupboard) - can suggest adding
+                ]
+            },
+            {
+                "id": "bathroom_1",
+                "soort": {"code": "VTK"},
+                "detail_soort": {"code": "BAD"},
+                "naam": "Bathroom",
+                "oppervlakte": 6,
+                "inhoud": 15,
+                "verwarmd": True,
+                "bouwkundige_elementen": [
+                    {
+                        "id": "elem_bad_1",
+                        "naam": "Bad",
+                        "soort": {"code": "VOO"},
+                        "detail_soort": {"code": "BAD"},
+                        "lengte": 1600
+                    }
+                    # Missing: Douchebak (shower) - can suggest adding
+                    # Missing: Toilet - can suggest adding
+                ]
+            },
+            {
+                "id": "living_1",
+                "soort": {"code": "VTK"},
+                "detail_soort": {"code": "WON"},
+                "naam": "Living Room",
+                "oppervlakte": 25,
+                "inhoud": 62.5,
+                "verwarmd": True
+            },
+            {
+                "id": "hallway_1",
+                "soort": {"code": "VTK"},
+                "detail_soort": {"code": "OVE"},
+                "naam": "Hallway",
+                "oppervlakte": 8,
+                "inhoud": 20,
+                "verwarmd": False  # Unheated hallway - can suggest heating
+            }
+        ],
+        "energieprestaties": [
+            {
+                "soort": {"code": "EI"},
+                "status": {"code": "DEFINITIEF"},
+                "begindatum": "2019-02-25",
+                "einddatum": "2029-02-25",
+                "registratiedatum": "2019-02-26T14:51:38+01:00",
+                "label": {"code": "D"},  # Lower energy label - can suggest improvement
+                "waarde": "2.15"
+            }
+        ],
+        "woz_eenheden": [
+            {
+                "waardepeildatum": "2024-01-01",
+                "vastgestelde_waarde": 420000
+            }
+        ],
+        "monumenten": []
+    },
     "peildatum": str(date.today())
 }
 

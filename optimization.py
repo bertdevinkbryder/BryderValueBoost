@@ -5,7 +5,6 @@ Focuses on space-efficient improvements within the existing building footprint.
 
 import logging
 from typing import List, Optional, Dict, Any
-from copy import deepcopy
 from datetime import date
 
 from woningwaardering import Woningwaardering
@@ -23,6 +22,27 @@ from woningwaardering.vera.referentiedata import (
 from models import OptimizationSuggestion, OptimizationCategory
 
 logger = logging.getLogger(__name__)
+
+
+def _get_code(referentiedata_obj) -> Optional[str]:
+    """
+    Extract the code from a ReferentieData object or dict.
+    
+    Handles both:
+    - Dict format: {"code": "AAN"}
+    - ReferentieData objects: obj.code
+    - None/missing values
+    """
+    if referentiedata_obj is None:
+        return None
+    if isinstance(referentiedata_obj, dict):
+        return referentiedata_obj.get("code")
+    if hasattr(referentiedata_obj, 'code'):
+        code = referentiedata_obj.code
+        if isinstance(code, dict):
+            return code.get("code")
+        return code
+    return None
 
 
 def find_optimization_opportunities(
@@ -87,10 +107,16 @@ def find_optimization_opportunities(
         logger.debug(f"Element quality upgrades failed: {e}")
     
     # 6. Improve energy efficiency (better insulation, heating systems)
-    try:
-        suggestions.extend(_suggest_energy_efficiency_improvements(eenheid, wws, peildatum))
-    except Exception as e:
-        logger.debug(f"Energy efficiency improvements failed: {e}")
+    suggestions.extend(_suggest_energy_efficiency_improvements(eenheid, wws, peildatum))
+
+    # 7. Suggest merging small rooms to improve layout efficiency (if applicable)
+    suggestions.extend(_suggest_merge_small_rooms(eenheid, wws, peildatum))
+
+    # 8. Suggest lighting improvements (if lighting is a factor in scoring and can be improved without major renovations)
+    suggestions.extend(_suggest_lighting_improvements(eenheid, wws, peildatum))
+
+    # 9. 
+    suggestions.extend(_suggest_finishing_quality(eenheid, wws, peildatum))
     
     # Sort by estimated score gain (highest first)
     suggestions.sort(key=lambda x: x.estimated_score_gain, reverse=True)
@@ -124,19 +150,19 @@ def _suggest_kitchen_upgrades(
     for room in current_rooms:
         if room.detail_soort == Ruimtedetailsoort.keuken:
             current_elements = room.bouwkundige_elementen or []
-            element_types = {getattr(elem, 'detail_soort', None) for elem in current_elements}
+            element_codes = {_get_code(getattr(elem, 'detail_soort', None)) for elem in current_elements}
             
             # Upgrade 1: Improve counter size
             aanrecht = None
             for elem in current_elements:
-                if getattr(elem, 'detail_soort', None) == Bouwkundigelementdetailsoort.aanrecht:
+                if _get_code(getattr(elem, 'detail_soort', None)) == "AAN":  # Aanrecht
                     aanrecht = elem
                     break
             
             if aanrecht and aanrecht.lengte:
                 current_length = aanrecht.lengte
                 # Test upgrading counter (e.g., 150cm -> 195cm or better distribution)
-                test_eenheid = deepcopy(eenheid)
+                test_eenheid = eenheid.model_copy(deep=True)
                 for test_room in test_eenheid.ruimten:
                     if test_room.id == room.id and test_room.bouwkundige_elementen:
                         for test_elem in test_room.bouwkundige_elementen:
@@ -164,9 +190,8 @@ def _suggest_kitchen_upgrades(
                     logger.debug(f"Error testing counter upgrade: {e}")
             
             # Upgrade 2: Add built-in storage/cupboards
-            has_cabinet = hasattr(Bouwkundigelementdetailsoort, 'kast') and Bouwkundigelementdetailsoort.kast in element_types
-            if not has_cabinet:
-                test_eenheid = deepcopy(eenheid)
+            if "KAS" not in element_codes:  # Kast (cupboard)
+                test_eenheid = eenheid.model_copy(deep=True)
                 for test_room in test_eenheid.ruimten:
                     if test_room.id == room.id:
                         if test_room.bouwkundige_elementen is None:
@@ -200,9 +225,8 @@ def _suggest_kitchen_upgrades(
                     logger.debug(f"Error testing cupboard upgrade: {e}")
             
             # Upgrade 3: Add sink if missing
-            has_sink = hasattr(Bouwkundigelementdetailsoort, 'spoelbak') and Bouwkundigelementdetailsoort.spoelbak in element_types
-            if not has_sink:
-                test_eenheid = deepcopy(eenheid)
+            if "SPO" not in element_codes:  # Spoelbak (sink)
+                test_eenheid = eenheid.model_copy(deep=True)
                 for test_room in test_eenheid.ruimten:
                     if test_room.id == room.id:
                         if test_room.bouwkundige_elementen is None:
@@ -265,19 +289,14 @@ def _suggest_bathroom_upgrades(
     
     for bathroom in bathrooms:
         elements = bathroom.bouwkundige_elementen or []
-        element_types = {getattr(e, 'detail_soort', None) for e in elements}
+        element_codes = {_get_code(getattr(e, 'detail_soort', None)) for e in elements}
         
         # Upgrade 1: Add shower if only bathtub exists
-        # Safely check for attributes that might not exist in this library version
-        try:
-            has_bath = hasattr(Bouwkundigelementdetailsoort, 'bad') and Bouwkundigelementdetailsoort.bad in element_types
-            has_shower = hasattr(Bouwkundigelementdetailsoort, 'douchebak') and Bouwkundigelementdetailsoort.douchebak in element_types
-        except (AttributeError, TypeError):
-            has_bath = False
-            has_shower = False
+        has_bath = "BAD" in element_codes  # Bad (bathtub)
+        has_shower = "DOU" in element_codes  # Douchebak (shower)
         
         if has_bath and not has_shower:
-            test_eenheid = deepcopy(eenheid)
+            test_eenheid = eenheid.model_copy(deep=True)
             for test_room in test_eenheid.ruimten:
                 if test_room.id == bathroom.id:
                     if test_room.bouwkundige_elementen is None:
@@ -311,10 +330,10 @@ def _suggest_bathroom_upgrades(
                 logger.debug(f"Error testing shower upgrade: {e}")
         
         # Upgrade 2: Add toilet if missing
-        has_toilet = hasattr(Bouwkundigelementdetailsoort, 'toilet') and Bouwkundigelementdetailsoort.toilet in element_types
+        has_toilet = "TOI" in element_codes  # Toilet
         
         if not has_toilet:
-            test_eenheid = deepcopy(eenheid)
+            test_eenheid = eenheid.model_copy(deep=True)
             for test_room in test_eenheid.ruimten:
                 if test_room.id == bathroom.id:
                     if test_room.bouwkundige_elementen is None:
@@ -324,7 +343,7 @@ def _suggest_bathroom_upgrades(
                         id="toilet_test",
                         naam="Toilet",
                         soort={"code": "VOO"},
-                        detail_soort={"code": "TOILET"},
+                        detail_soort={"code": "TOI"},
                         lengte=600
                     )
                     test_room.bouwkundige_elementen.append(toilet)
@@ -368,7 +387,7 @@ def _suggest_heating_improvements(
     # Find unheated rooms
     for room in current_rooms:
         if not room.verwarmd:
-            test_eenheid = deepcopy(eenheid)
+            test_eenheid = eenheid.model_copy(deep=True)
             for test_room in test_eenheid.ruimten:
                 if test_room.id == room.id:
                     test_room.verwarmd = True
@@ -428,18 +447,13 @@ def _suggest_ventilation_improvements(
         
         if needs_ventilation:
             elements = room.bouwkundige_elementen or []
-            # Safely check for ventilation attribute
-            try:
-                ventilatie_attr = Bouwkundigelementdetailsoort.ventilatie if hasattr(Bouwkundigelementdetailsoort, 'ventilatie') else None
-                has_ventilation = ventilatie_attr and any(
-                    getattr(e, 'detail_soort', None) == ventilatie_attr 
-                    for e in elements
-                )
-            except (AttributeError, TypeError):
-                has_ventilation = False
+            has_ventilation = any(
+                _get_code(getattr(e, 'detail_soort', None)) == "VEN" 
+                for e in elements
+            )
             
             if not has_ventilation and hasattr(Bouwkundigelementdetailsoort, 'ventilatie'):
-                test_eenheid = deepcopy(eenheid)
+                test_eenheid = eenheid.model_copy(deep=True)
                 for test_room in test_eenheid.ruimten:
                     if test_room.id == room.id:
                         if test_room.bouwkundige_elementen is None:
@@ -449,7 +463,7 @@ def _suggest_ventilation_improvements(
                             id="ventilation_test",
                             naam="Ventilatie",
                             soort={"code": "OVE"},
-                            detail_soort={"code": "VENTILATIE"},
+                            detail_soort={"code": "VEN"},
                             lengte=100
                         )
                         test_room.bouwkundige_elementen.append(ventilation)
@@ -517,7 +531,7 @@ def _suggest_element_quality_upgrades(
         
         # If room has no window element, test adding better ones
         if not has_windows and hasattr(Bouwkundigelementdetailsoort, 'raam'):
-            test_eenheid = deepcopy(eenheid)
+            test_eenheid = eenheid.model_copy(deep=True)
             for test_room in test_eenheid.ruimten:
                 if test_room.id == room.id:
                     if test_room.bouwkundige_elementen is None:
@@ -573,7 +587,7 @@ def _suggest_energy_efficiency_improvements(
         current_label = energieprestaties[-1].label if energieprestaties else None
         
         if current_label and current_label != "A":
-            test_eenheid = deepcopy(eenheid)
+            test_eenheid = eenheid.model_copy(deep=True)
             
             # Simulate improving to better label
             from woningwaardering.vera.referentiedata import Energielabel
@@ -607,6 +621,174 @@ def _suggest_energy_efficiency_improvements(
     
     return suggestions
 
+def _suggest_merge_small_rooms(eenheid, wws, peildatum):
+    """
+    Suggest merging two adjacent small rooms into one larger living space.
+    Criteria:
+    - Both rooms < 6 m²
+    - Merged area >= 10 m²
+    - Simulate removal of room2 and enlarged room1
+    """
+    suggestions = []
+    baseline_score = _extract_total_score(wws.waardeer(eenheid))
+
+    rooms = eenheid.ruimten or []
+
+    # Brute-force pair scanning
+    for r1 in rooms:
+        if not r1.oppervlakte or r1.oppervlakte >= 6:
+            continue
+        for r2 in rooms:
+            if r1.id == r2.id:
+                continue
+            if not r2.oppervlakte or r2.oppervlakte >= 6:
+                continue
+
+            merged_area = r1.oppervlakte + r2.oppervlakte
+
+            if merged_area < 10:
+                continue  # doesn't yield scoring benefits
+
+            # Build merged test scenario
+            test = eenheid.model_copy(deep=True)
+
+            # Locate test copies
+            t1 = next((tr for tr in test.ruimten if tr.id == r1.id), None)
+            t2 = next((tr for tr in test.ruimten if tr.id == r2.id), None)
+
+            if not t1 or not t2:
+                continue
+
+            t1.oppervlakte = merged_area
+
+            # Remove r2 from test strategy
+            test.ruimten = [rr for rr in test.ruimten if rr.id != r2.id]
+
+            try:
+                merged_score = _extract_total_score(wws.waardeer(test))
+                gain = merged_score - baseline_score
+
+                if gain > 0.1:
+                    suggestions.append(OptimizationSuggestion(
+                        category=OptimizationCategory.SPACE_OPTIMIZATION,
+                        title=f"Merge rooms '{r1.naam}' and '{r2.naam}'",
+                        description="Combining two undersized rooms into one usable living space increases valuation points.",
+                        estimated_score_gain=float(gain),
+                        implementation_effort="medium",
+                        estimated_cost_indication="€1,500 - €6,000",
+                        affected_criteria=["usable_floor_area", "room_function"]
+                    ))
+
+            except Exception:
+                pass
+
+    return suggestions
+
+def _suggest_lighting_improvements(eenheid, wws, peildatum):
+    """
+    Suggest installing basic lighting (ARM) in rooms that lack it.
+    ARM = Armatuur (light fixture).
+    Applies to all living spaces and kitchens.
+    """
+    suggestions = []
+    baseline_score = _extract_total_score(wws.waardeer(eenheid))
+
+    from woningwaardering.vera.referentiedata import Bouwkundigelementdetailsoort
+
+    for room in eenheid.ruimten or []:
+        elements = room.bouwkundige_elementen or []
+        element_codes = {_get_code(e.detail_soort) for e in elements}
+
+        # If no armatuur (ARM)
+        if "ARM" not in element_codes:
+            test = eenheid.model_copy(deep=True)
+
+            troom = next((tr for tr in test.ruimten if tr.id == room.id), None)
+            if troom is None:
+                continue
+
+            if troom.bouwkundige_elementen is None:
+                troom.bouwkundige_elementen = []
+
+            troom.bouwkundige_elementen.append(
+                BouwkundigElementenBouwkundigElement(
+                    id=f"arm_{room.id}",
+                    naam="Armatuur (verlichting)",
+                    soort={"code": "VOO"},
+                    detail_soort={"code": "ARM"},
+                    lengte=100
+                )
+            )
+
+            try:
+                new_score = _extract_total_score(wws.waardeer(test))
+                gain = new_score - baseline_score
+
+                if gain > 0:
+                    suggestions.append(OptimizationSuggestion(
+                        category=OptimizationCategory.FACILITIES,
+                        title=f"Add Lighting to {room.naam}",
+                        description="Installing built-in lighting improves comfort and usability.",
+                        estimated_score_gain=float(gain),
+                        implementation_effort="low",
+                        estimated_cost_indication="€150 - €600",
+                        affected_criteria=["lighting", "comfort", "room_quality"]
+                    ))
+            except Exception:
+                pass
+
+    return suggestions
+
+def _suggest_finishing_quality(eenheid, wws, peildatum):
+    """
+    Suggest adding Afdekker (AFD) to improve finishing quality in important rooms.
+    """
+    suggestions = []
+    baseline_score = _extract_total_score(wws.waardeer(eenheid))
+
+    for room in eenheid.ruimten or []:
+        elements = room.bouwkundige_elementen or []
+        element_codes = {_get_code(e.detail_soort) for e in elements}
+
+        # add AFD if missing
+        if "AFD" not in element_codes:
+            test = eenheid.model_copy(deep=True)
+            troom = next((tr for tr in test.ruimten if tr.id == room.id), None)
+
+            if not troom:
+                continue
+
+            if troom.bouwkundige_elementen is None:
+                troom.bouwkundige_elementen = []
+
+            troom.bouwkundige_elementen.append(
+                BouwkundigElementenBouwkundigElement(
+                    id=f"afd_{room.id}",
+                    naam="Afdekker (afwerking)",
+                    soort={"code": "VOO"},
+                    detail_soort={"code": "AFD"},
+                    lengte=120
+                )
+            )
+
+            try:
+                new_score = _extract_total_score(wws.waardeer(test))
+                gain = new_score - baseline_score
+
+                if gain > 0:
+                    suggestions.append(OptimizationSuggestion(
+                        category=OptimizationCategory.INSULATION,
+                        title=f"Improve finishing quality in {room.naam}",
+                        description="Adding finishing panels improves comfort and perceived quality.",
+                        estimated_score_gain=float(gain),
+                        implementation_effort="low",
+                        estimated_cost_indication="€200 - €900",
+                        affected_criteria=["interior_quality", "comfort"]
+                    ))
+            except Exception:
+                pass
+
+    return suggestions
 
 def _extract_total_score(result: Any) -> float:
     """
