@@ -9,6 +9,7 @@ env/
 ENV/
 env.bak/
 venv.bak/
+.venv
 
 # IDE
 .vscode/
@@ -16,6 +17,7 @@ venv.bak/
 *.swp
 *.swo
 *~
+.claude
 
 # Testing
 .pytest_cache/
@@ -32,3 +34,6 @@ Thumbs.db
 
 # API logs
 *.log
+
+# IFC files
+*.ifc

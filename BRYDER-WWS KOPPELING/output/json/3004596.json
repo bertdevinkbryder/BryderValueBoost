@@ -1,0 +1,228 @@
+{
+  "id": "3004596",
+  "woningwaarderingstelsel": {
+    "code": "ZEL",
+    "naam": "Zelfstandige woonruimte"
+  },
+  "ruimten": [
+    {
+      "id": "0.07.2865",
+      "naam": "slaapkamer 2",
+      "soort": {
+        "code": "VTK",
+        "naam": "Vertrek"
+      },
+      "detailSoort": {
+        "code": "SLA",
+        "naam": "Slaapkamer"
+      },
+      "oppervlakte": 5.97,
+      "verwarmd": true,
+      "inhoud": 14.57,
+      "hoogte": 2.44,
+      "afsluitbaar": true
+    },
+    {
+      "id": "0.07.2866",
+      "naam": "slaapkamer 1",
+      "soort": {
+        "code": "VTK",
+        "naam": "Vertrek"
+      },
+      "detailSoort": {
+        "code": "SLA",
+        "naam": "Slaapkamer"
+      },
+      "oppervlakte": 11.16,
+      "verwarmd": true,
+      "inhoud": 27.2,
+      "hoogte": 2.44,
+      "afsluitbaar": true
+    },
+    {
+      "id": "0.07.2867",
+      "naam": "hal",
+      "soort": {
+        "code": "VRK",
+        "naam": "Verkeersruimte"
+      },
+      "detailSoort": {
+        "code": "HAL",
+        "naam": "Hal"
+      },
+      "oppervlakte": 6.97,
+      "verwarmd": true,
+      "inhoud": 17.0,
+      "hoogte": 2.44,
+      "afsluitbaar": false
+    },
+    {
+      "id": "0.07.2868",
+      "naam": "MK warm",
+      "soort": {
+        "code": "OVR",
+        "naam": "Overige ruimtes"
+      },
+      "detailSoort": {
+        "code": "MET",
+        "naam": "Meterruimte"
+      },
+      "oppervlakte": 0.28,
+      "verwarmd": false,
+      "inhoud": 0.69,
+      "hoogte": 2.44,
+      "afsluitbaar": false
+    },
+    {
+      "id": "0.07.2869",
+      "naam": "MK koud",
+      "soort": {
+        "code": "OVR",
+        "naam": "Overige ruimtes"
+      },
+      "detailSoort": {
+        "code": "MET",
+        "naam": "Meterruimte"
+      },
+      "oppervlakte": 0.28,
+      "verwarmd": false,
+      "inhoud": 0.69,
+      "hoogte": 2.44,
+      "afsluitbaar": false
+    },
+    {
+      "id": "0.07.2870",
+      "naam": "berging/techniek",
+      "soort": {
+        "code": "OVR",
+        "naam": "Overige ruimtes"
+      },
+      "detailSoort": {
+        "code": "BER",
+        "naam": "Berging"
+      },
+      "oppervlakte": 4.54,
+      "verwarmd": false,
+      "inhoud": 11.06,
+      "hoogte": 2.44,
+      "afsluitbaar": false
+    },
+    {
+      "id": "0.07.2871",
+      "naam": "woonkamer / keuken",
+      "soort": {
+        "code": "VTK",
+        "naam": "Vertrek"
+      },
+      "detailSoort": {
+        "code": "WOO",
+        "naam": "Woonkamer"
+      },
+      "oppervlakte": 27.0,
+      "verwarmd": true,
+      "inhoud": 65.84,
+      "hoogte": 2.44,
+      "afsluitbaar": true,
+      "bouwkundigeElementen": [
+        {
+          "id": "0.07.2871_AAN",
+          "naam": "Aanrecht",
+          "soort": {
+            "code": "KEU",
+            "naam": "Keuken voorziening"
+          },
+          "detailSoort": {
+            "code": "AAN",
+            "naam": "Aanrecht"
+          },
+          "lengte": 2100
+        }
+      ]
+    },
+    {
+      "id": "0.07.2872",
+      "naam": "badkamer/toilet",
+      "soort": {
+        "code": "VTK",
+        "naam": "Vertrek"
+      },
+      "detailSoort": {
+        "code": "BAD",
+        "naam": "Badruimte"
+      },
+      "oppervlakte": 6.04,
+      "verwarmd": true,
+      "inhoud": 14.73,
+      "hoogte": 2.44,
+      "afsluitbaar": true,
+      "installaties": [
+        {
+          "code": "DOU",
+          "naam": "Douche"
+        },
+        {
+          "code": "WAS",
+          "naam": "Wastafel"
+        },
+        {
+          "code": "CLO",
+          "naam": "Toilet"
+        }
+      ]
+    }
+  ],
+  "bouwjaar": 2025,
+  "adres": {
+    "straatnaam": "Fascinatio Boulevard",
+    "huisnummer": "1418",
+    "postcode": "2909 VD",
+    "woonplaats": {
+      "naam": "CAPELLE AAN DEN IJSSEL"
+    }
+  },
+  "adresseerbaarObjectBasisregistratie": {
+    "id": "0502010000940680",
+    "bagIdentificatie": "0502010000940680"
+  },
+  "panden": [
+    {
+      "soort": {
+        "code": "MGW",
+        "naam": "Meergezinswoning"
+      }
+    }
+  ],
+  "klimaatbeheersing": [
+    {
+      "code": "IND",
+      "naam": "Individueel"
+    }
+  ],
+  "wozEenheden": [
+    {
+      "vastgesteldeWaarde": 182400.0,
+      "waardepeildatum": "2024-01-01"
+    }
+  ],
+  "energieprestaties": [
+    {
+      "label": {
+        "code": "A",
+        "naam": "A"
+      },
+      "soort": {
+        "code": "NTA",
+        "naam": "Energielabel conform NTA8800"
+      },
+      "waarde": "0.4",
+      "begindatum": "2025-01-01",
+      "einddatum": "2035-01-01",
+      "status": {
+        "code": "DEF",
+        "naam": "Definitief"
+      }
+    }
+  ],
+  "monumenten": [],
+  "gebruiksoppervlakte": 57
+}
