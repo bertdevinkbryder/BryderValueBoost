@@ -64,6 +64,11 @@ class PipelineGUI:
         self.results_tab = ttk.Frame(notebook)
         notebook.add(self.results_tab, text="📊 Resultaten")
         self._build_results()
+        
+        # Tab 4: Recommendations
+        self.recommendations_tab = ttk.Frame(notebook)
+        notebook.add(self.recommendations_tab, text="💡 Aanbevelingen")
+        self._build_recommendations()
     
     def _build_dashboard(self):
         """Build the dashboard tab."""
@@ -292,6 +297,27 @@ class PipelineGUI:
                                                      state=tk.DISABLED, font=("Courier", 9))
         self.stats_view.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
     
+    def _build_recommendations(self):
+        """Build the recommendations tab."""
+        frame = ttk.Frame(self.recommendations_tab, padding=10)
+        frame.pack(fill=tk.BOTH, expand=True)
+        
+        # Controls
+        control_frame = ttk.Frame(frame)
+        control_frame.pack(fill=tk.X, pady=10)
+        
+        ttk.Label(control_frame, text="Selecteer eenheid:").pack(side=tk.LEFT, padx=5)
+        self.rec_combo = ttk.Combobox(control_frame, state="readonly", width=30)
+        self.rec_combo.pack(side=tk.LEFT, padx=5)
+        self.rec_combo.bind("<<ComboboxSelected>>", lambda e: self._display_recommendations())
+        
+        ttk.Button(control_frame, text="🔄 Vernieuwen", command=self._refresh_recommendations_list).pack(side=tk.LEFT, padx=5)
+        
+        # Recommendations display
+        self.recommendations_view = scrolledtext.ScrolledText(frame, height=30, width=100,
+                                                               state=tk.DISABLED, font=("Courier", 9), wrap=tk.WORD)
+        self.recommendations_view.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+    
     def _update_status(self):
         """Update status indicators."""
         status = self.backend.get_status()
@@ -464,6 +490,9 @@ class PipelineGUI:
             
             # Compute statistics
             self._compute_statistics()
+            
+            # Load recommendations list
+            self._refresh_recommendations_list()
     
     def _load_unit_summary(self):
         """Build a per-unit summary table showing key info per eenheid."""
@@ -615,6 +644,126 @@ class PipelineGUI:
         self.log_text.delete(1.0, tk.END)
         self.log_text.configure(state=tk.DISABLED)
         self.log_buffer = StringIO()
+    
+    def _refresh_recommendations_list(self):
+        """Refresh list of available units for recommendations."""
+        try:
+            json_files = sorted(JSON_DIR.glob("*.json"))
+            names = [f.stem for f in json_files]
+            self.rec_combo['values'] = names
+            if names:
+                self.rec_combo.current(0)
+                self._display_recommendations()
+            
+            # Test which units have working recommendations
+            working_units = []
+            failed_units = []
+            for unit_id in names[:5]:  # Test first 5 for quick feedback
+                result = self.backend.get_recommendations_for_unit(unit_id)
+                if result.get("success"):
+                    working_units.append(unit_id)
+                else:
+                    failed_units.append(unit_id)
+            
+            if failed_units:
+                msg = (f"✓ {len(names)} eenheden beschikbaar voor aanbevelingen\n"
+                       f"   {len(working_units)} van {len(names[:5])} geteste eenheden hebben werkende aanbevelingen")
+                self._log_callback(msg)
+            else:
+                self._log_callback(f"✓ {len(names)} eenheden beschikbaar voor aanbevelingen")
+        except Exception as e:
+            messagebox.showerror("Fout", f"Kon eenheden niet laden: {e}")
+            self._log_callback(f"✗ Fout bij laden van eenheden: {e}")
+    
+    def _display_recommendations(self):
+        """Display recommendations for the selected unit."""
+        try:
+            selected_unit = self.rec_combo.get()
+            if not selected_unit:
+                return
+            
+            self.recommendations_view.configure(state=tk.NORMAL)
+            self.recommendations_view.delete(1.0, tk.END)
+            
+            # Show loading message
+            self.recommendations_view.insert(tk.END, "⏳ Aanbevelingen genereren...\n")
+            self.recommendations_view.configure(state=tk.DISABLED)
+            self.root.update()
+            
+            # Get recommendations from backend
+            result = self.backend.get_recommendations_for_unit(selected_unit)
+            
+            self.recommendations_view.configure(state=tk.NORMAL)
+            self.recommendations_view.delete(1.0, tk.END)
+            
+            if not result.get("success"):
+                error_msg = result.get('error', 'Onbekende fout')
+                # Check if it's an optimization module error
+                if "douchebak" in error_msg.lower() or "attribute" in error_msg.lower():
+                    self.recommendations_view.insert(tk.END, 
+                        f"⚠ Opmerking voor eenheid {selected_unit}:\n\n"
+                        f"De aanbevelingen kunnen niet worden gegenereerd vanwege ontbrekende\n"
+                        f"bouwelelementgegevens in de woningwaarderingslibrary.\n\n"
+                        f"Volgende stappen:\n"
+                        f"1. Zorg dat alle CSV-gegevens volledig zijn ingevuld\n"
+                        f"2. Klik '🤖 Auto-fill standaardwaarden' in de Dashboard\n"
+                        f"3. Regenereer de JSON-bestanden\n\n"
+                        f"Details: {error_msg}\n")
+                else:
+                    self.recommendations_view.insert(tk.END, f"❌ Fout: {error_msg}\n")
+                self.recommendations_view.configure(state=tk.DISABLED)
+                self._log_callback(f"⚠ {error_msg}")
+                return
+            
+            recommendations = result.get("recommendations", [])
+            
+            # Format recommendations
+            lines = []
+            lines.append("=" * 100)
+            lines.append(f"  AANBEVELINGEN VOOR EENHEID {selected_unit}")
+            lines.append("=" * 100)
+            
+            if not recommendations:
+                lines.append("\n✓ Geen aanbevelingen - deze eenheid is al optimaal!")
+            else:
+                lines.append(f"\n📋 {len(recommendations)} aanbevelingen gevonden:\n")
+                
+                for i, rec in enumerate(recommendations, 1):
+                    lines.append("-" * 100)
+                    lines.append(f"\n#{i} {rec.get('title', 'Onbekend')}")
+                    lines.append(f"   Categorie: {rec.get('category', '-')}")
+                    lines.append(f"   Score verhoging: +{rec.get('estimated_score_gain', 0):.1f} punten")
+                    lines.append(f"   Inspanning: {rec.get('implementation_effort', '-')}")
+                    lines.append(f"   Geschatte kosten: {rec.get('estimated_cost_indication', '-')}")
+                    
+                    description = rec.get('description', '')
+                    lines.append(f"\n   Beschrijving:")
+                    for line in description.split('\n'):
+                        lines.append(f"   {line}")
+                    
+                    criteria = rec.get('affected_criteria', [])
+                    if criteria:
+                        lines.append(f"\n   Betrokken criteria:")
+                        for crit in criteria:
+                            lines.append(f"     • {crit}")
+                    
+                    lines.append("")
+            
+            lines.append("\n" + "=" * 100)
+            
+            # Insert text
+            text = "\n".join(lines)
+            self.recommendations_view.insert(1.0, text)
+            self.recommendations_view.configure(state=tk.DISABLED)
+            
+            self._log_callback(f"✓ Aanbevelingen geladen voor eenheid {selected_unit}: {len(recommendations)} gevonden")
+        
+        except Exception as e:
+            self.recommendations_view.configure(state=tk.NORMAL)
+            self.recommendations_view.delete(1.0, tk.END)
+            self.recommendations_view.insert(tk.END, f"❌ Fout: {e}")
+            self.recommendations_view.configure(state=tk.DISABLED)
+            self._log_callback(f"✗ Fout bij weergeven aanbevelingen: {e}")
 
 
 def main():

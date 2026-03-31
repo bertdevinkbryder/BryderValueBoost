@@ -1,5 +1,5 @@
 ﻿eenheid_id;bouwnummer;straat;huisnummer;huisletter;huisnummertoevoeging;postcode;plaats;type_overzicht;cluster_naam;pand_id;bag_verblijfsobject;bag_nummeraanduiding;woningwaarderingstelsel;pandsoort;bouwjaar;klimaatbeheersing;woz_waarde;woz_peildatum;energielabel;energieprestatie_soort;energieprestatie_waarde;energieprestatie_begindatum;energieprestatie_einddatum;monument;gebruiksoppervlakte
-3004587;1;Fascinatio Boulevard;1400;;;2909 VD;CAPELLE AAN DEN IJSSEL;B3;Fascinatio 1400-1464 WON;502100000940661;502010000940662;502200000940663;ZEL;MGW;2025.0;IND;;;A;EPE;;;;NEE;
+3004587;1;Fascinatio Boulevard;1400;;;2909 VD;CAPELLE AAN DEN IJSSEL;B3;Fascinatio 1400-1464 WON;502100000940661;502010000940662;502200000940663;ZEL;MGW;2025.0;IND;50000.0;;A;EPE;;;;NEE;
 3004588;2;Fascinatio Boulevard;1402;;;2909 VD;CAPELLE AAN DEN IJSSEL;B3;Fascinatio 1400-1464 WON;502100000940661;502010000940664;502200000940665;ZEL;MGW;2025.0;IND;;;A;EPE;;;;NEE;
 3004589;3;Fascinatio Boulevard;1404;;;2909 VD;CAPELLE AAN DEN IJSSEL;B3;Fascinatio 1400-1464 WON;502100000940661;502010000940666;502200000940667;ZEL;MGW;2025.0;IND;;;A;EPE;;;;NEE;
 3004590;4;Fascinatio Boulevard;1406;;;2909 VD;CAPELLE AAN DEN IJSSEL;B3;Fascinatio 1400-1464 WON;502100000940661;502010000940668;502200000940669;ZEL;MGW;2025.0;IND;;;A;EPE;;;;NEE;

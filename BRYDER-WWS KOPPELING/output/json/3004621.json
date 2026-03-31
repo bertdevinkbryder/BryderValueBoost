@@ -133,6 +133,7 @@
       ]
     }
   ],
+  "bouwjaar": 2025,
   "adres": {
     "straatnaam": "Fascinatio Boulevard",
     "huisnummer": "1468",
@@ -142,8 +143,8 @@
     }
   },
   "adresseerbaarObjectBasisregistratie": {
-    "id": "0502010000940766",
-    "bagIdentificatie": "0502010000940766"
+    "id": "502010000940766",
+    "bagIdentificatie": "502010000940766"
   },
   "panden": [
     {
@@ -153,5 +154,38 @@
       }
     }
   ],
-  "monumenten": []
+  "klimaatbeheersing": [
+    {
+      "code": "IND",
+      "naam": "Individueel"
+    }
+  ],
+  "wozEenheden": [
+    {
+      "vastgesteldeWaarde": 259440.0,
+      "waardepeildatum": "2025-01-01"
+    }
+  ],
+  "energieprestaties": [
+    {
+      "label": {
+        "code": "A",
+        "naam": "A"
+      },
+      "soort": {
+        "code": "EPE",
+        "naam": ""
+      },
+      "status": {
+        "code": "DEF",
+        "naam": "Definitief"
+      }
+    }
+  ],
+  "monumenten": [
+    {
+      "code": "NEE",
+      "naam": "NEE"
+    }
+  ]
 }

@@ -23,6 +23,15 @@ from pipeline.extract_excel import extract_eenheden
 from pipeline.extract_ifc import extract_rooms_from_ifc, write_ruimten_csv
 from pipeline.link_eenheden import link_ruimten_to_eenheden
 from pipeline.csv_to_json import convert_to_json
+import json as jsonlib
+from datetime import date
+import platform
+import os
+import time
+
+# Windows workaround: add dummy tzset if it doesn't exist
+if platform.system() == "Windows" and not hasattr(time, 'tzset'):
+    time.tzset = lambda: None
 
 
 class PipelineBackend:
@@ -245,6 +254,218 @@ class PipelineBackend:
         except Exception as e:
             self._log(f"✗ Fout bij invullen defaults: {e}")
             return {"success": False, "log": self.last_log, "error": str(e)}
+    
+    def get_recommendations_for_unit(self, eenheid_id: str) -> dict:
+        """
+        Get optimization recommendations for a specific housing unit.
+        
+        Returns:
+            {
+                "success": bool,
+                "eenheid_id": str,
+                "recommendations": [
+                    {
+                        "category": str,
+                        "title": str,
+                        "description": str,
+                        "estimated_score_gain": float,
+                        "implementation_effort": str,
+                        "estimated_cost_indication": str,
+                        "affected_criteria": [str]
+                    },
+                    ...
+                ]
+            }
+        """
+        try:
+            json_file = JSON_DIR / f"{eenheid_id}.json"
+            if not json_file.exists():
+                return {
+                    "success": False,
+                    "recommendations": [],
+                    "error": f"Geen JSON gevonden voor {eenheid_id}"
+                }
+            
+            # Load JSON data
+            with open(json_file, encoding="utf-8") as f:
+                eenheid_data = jsonlib.load(f)
+            
+            # Normalize JSON data to ensure required fields exist
+            eenheid_data = self._normalize_eenheid_data(eenheid_data)
+            
+            # Import optimization module from the parent directory
+            import sys
+            parent_dir = str(Path(__file__).parent.parent.parent)
+            if parent_dir not in sys.path:
+                sys.path.insert(0, parent_dir)
+            
+            try:
+                from optimization import find_optimization_opportunities
+                from woningwaardering import Woningwaardering
+                from woningwaardering.vera.bvg.generated import EenhedenEenheid
+            except ImportError as import_err:
+                error_msg = str(import_err)
+                if "woningwaardering" in error_msg:
+                    return {
+                        "success": False,
+                        "recommendations": [],
+                        "error": f"woningwaardering module niet geïnstalleerd. Voer uit: pip install woningwaardering>=4.2.0"
+                    }
+                else:
+                    return {
+                        "success": False,
+                        "recommendations": [],
+                        "error": f"Kon modules niet laden: {error_msg}"
+                    }
+            
+            try:
+                # Parse to EenhedenEenheid
+                eenheid = EenhedenEenheid.model_validate(eenheid_data)
+                
+                # Get baseline score and recommendations
+                wws = Woningwaardering(peildatum=date.today())
+                baseline_result = wws.waardeer(eenheid)
+                
+                recommendations = find_optimization_opportunities(
+                    eenheid=eenheid,
+                    wws=wws,
+                    baseline_result=baseline_result,
+                    peildatum=date.today(),
+                    max_suggestions=10
+                )
+                
+                # Convert to dict format
+                recommendations_list = []
+                for rec in recommendations:
+                    rec_dict = {
+                        "category": str(rec.category),
+                        "title": rec.title,
+                        "description": rec.description,
+                        "estimated_score_gain": rec.estimated_score_gain,
+                        "implementation_effort": rec.implementation_effort,
+                        "estimated_cost_indication": rec.estimated_cost_indication or "-",
+                        "affected_criteria": rec.affected_criteria or []
+                    }
+                    recommendations_list.append(rec_dict)
+                
+                return {
+                    "success": True,
+                    "eenheid_id": eenheid_id,
+                    "recommendations": recommendations_list
+                }
+            
+            except Exception as validation_error:
+                # If validation fails due to WOZ, attempt to fix it
+                error_str = str(validation_error)
+                if "woz" in error_str.lower():
+                    try:
+                        # Fix WOZ and retry
+                        if not eenheid_data.get("wozEenheden") or not eenheid_data["wozEenheden"]:
+                            total_area = sum(r.get("oppervlakte", 0) for r in eenheid_data.get("ruimten", []))
+                            default_woz = total_area * 4000 if total_area > 0 else 50000
+                            eenheid_data["wozEenheden"] = [{
+                                "vastgesteldeWaarde": default_woz,
+                                "waardepeildatum": "2025-01-01"
+                            }]
+                        
+                        # Retry validation
+                        eenheid = EenhedenEenheid.model_validate(eenheid_data)
+                        
+                        wws = Woningwaardering(peildatum=date.today())
+                        baseline_result = wws.waardeer(eenheid)
+                        
+                        recommendations = find_optimization_opportunities(
+                            eenheid=eenheid,
+                            wws=wws,
+                            baseline_result=baseline_result,
+                            peildatum=date.today(),
+                            max_suggestions=10
+                        )
+                        
+                        recommendations_list = []
+                        for rec in recommendations:
+                            rec_dict = {
+                                "category": str(rec.category),
+                                "title": rec.title,
+                                "description": rec.description,
+                                "estimated_score_gain": rec.estimated_score_gain,
+                                "implementation_effort": rec.implementation_effort,
+                                "estimated_cost_indication": rec.estimated_cost_indication or "-",
+                                "affected_criteria": rec.affected_criteria or []
+                            }
+                            recommendations_list.append(rec_dict)
+                        
+                        return {
+                            "success": True,
+                            "eenheid_id": eenheid_id,
+                            "recommendations": recommendations_list
+                        }
+                    except Exception as retry_error:
+                        return {
+                            "success": False,
+                            "recommendations": [],
+                            "error": f"Fout bij genereren aanbevelingen (na WOZ fix): {retry_error}"
+                        }
+                else:
+                    return {
+                        "success": False,
+                        "recommendations": [],
+                        "error": f"Fout bij genereren aanbevelingen: {validation_error}"
+                    }
+        
+        except Exception as e:
+            return {
+                "success": False,
+                "recommendations": [],
+                "error": str(e)
+            }
+    
+    def _normalize_eenheid_data(self, data: dict) -> dict:
+        """
+        Normalize JSON data to ensure all required fields exist and are not None.
+        Ensures compatibility with older JSON files that may be missing fields.
+        """
+        # Ensure list fields are never None
+        if data.get("energieprestaties") is None:
+            data["energieprestaties"] = []
+        if data.get("ruimten") is None:
+            data["ruimten"] = []
+        if data.get("monumenten") is None:
+            data["monumenten"] = []
+        if data.get("installaties") is None:
+            data["installaties"] = []
+        if data.get("bouwkundigeElementen") is None:
+            data["bouwkundigeElementen"] = []
+        
+        # Ensure WOZ is valid and complete
+        if not data.get("wozEenheden") or len(data.get("wozEenheden", [])) == 0:
+            # Calculate from room areas if WOZ is missing
+            try:
+                total_area = sum(r.get("oppervlakte", 0) for r in data.get("ruimten", []))
+                default_woz = total_area * 4000 if total_area > 0 else 50000
+                data["wozEenheden"] = [{
+                    "vastgesteldeWaarde": default_woz,
+                    "waardepeildatum": "2025-01-01"
+                }]
+            except:
+                data["wozEenheden"] = [{
+                    "vastgesteldeWaarde": 50000,
+                    "waardepeildatum": "2025-01-01"
+                }]
+        else:
+            # Ensure each WOZ entry has a date
+            for woz in data["wozEenheden"]:
+                if "waardepeildatum" not in woz:
+                    woz["waardepeildatum"] = "2025-01-01"
+        
+        # Ensure each ruimte has required fields
+        for ruimte in data.get("ruimten", []):
+            if ruimte.get("bouwkundigeElementen") is None:
+                ruimte["bouwkundigeElementen"] = []
+            if ruimte.get("installaties") is None:
+                ruimte["installaties"] = []
+        
+        return data
 
 
 # Global backend instance

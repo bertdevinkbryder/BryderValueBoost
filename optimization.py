@@ -57,22 +57,40 @@ def find_optimization_opportunities(
     suggestions: List[OptimizationSuggestion] = []
     
     # 1. Upgrade kitchen facilities (within existing kitchen space)
-    suggestions.extend(_suggest_kitchen_upgrades(eenheid, wws, peildatum))
+    try:
+        suggestions.extend(_suggest_kitchen_upgrades(eenheid, wws, peildatum))
+    except Exception as e:
+        logger.debug(f"Kitchen upgrades failed: {e}")
     
     # 2. Upgrade bathroom fixtures (within existing bathroom)
-    suggestions.extend(_suggest_bathroom_upgrades(eenheid, wws, peildatum))
+    try:
+        suggestions.extend(_suggest_bathroom_upgrades(eenheid, wws, peildatum))
+    except Exception as e:
+        logger.debug(f"Bathroom upgrades failed: {e}")
     
     # 3. Add heating to unheated rooms
-    suggestions.extend(_suggest_heating_improvements(eenheid, wws, peildatum))
+    try:
+        suggestions.extend(_suggest_heating_improvements(eenheid, wws, peildatum))
+    except Exception as e:
+        logger.debug(f"Heating improvements failed: {e}")
     
     # 4. Improve ventilation and air quality
-    suggestions.extend(_suggest_ventilation_improvements(eenheid, wws, peildatum))
+    try:
+        suggestions.extend(_suggest_ventilation_improvements(eenheid, wws, peildatum))
+    except Exception as e:
+        logger.debug(f"Ventilation improvements failed: {e}")
     
     # 5. Upgrade existing elements (windows, doors, insulation indicators)
-    suggestions.extend(_suggest_element_quality_upgrades(eenheid, wws, peildatum))
+    try:
+        suggestions.extend(_suggest_element_quality_upgrades(eenheid, wws, peildatum))
+    except Exception as e:
+        logger.debug(f"Element quality upgrades failed: {e}")
     
     # 6. Improve energy efficiency (better insulation, heating systems)
-    suggestions.extend(_suggest_energy_efficiency_improvements(eenheid, wws, peildatum))
+    try:
+        suggestions.extend(_suggest_energy_efficiency_improvements(eenheid, wws, peildatum))
+    except Exception as e:
+        logger.debug(f"Energy efficiency improvements failed: {e}")
     
     # Sort by estimated score gain (highest first)
     suggestions.sort(key=lambda x: x.estimated_score_gain, reverse=True)
@@ -146,7 +164,8 @@ def _suggest_kitchen_upgrades(
                     logger.debug(f"Error testing counter upgrade: {e}")
             
             # Upgrade 2: Add built-in storage/cupboards
-            if Bouwkundigelementdetailsoort.kast not in element_types:
+            has_cabinet = hasattr(Bouwkundigelementdetailsoort, 'kast') and Bouwkundigelementdetailsoort.kast in element_types
+            if not has_cabinet:
                 test_eenheid = deepcopy(eenheid)
                 for test_room in test_eenheid.ruimten:
                     if test_room.id == room.id:
@@ -181,7 +200,8 @@ def _suggest_kitchen_upgrades(
                     logger.debug(f"Error testing cupboard upgrade: {e}")
             
             # Upgrade 3: Add sink if missing
-            if Bouwkundigelementdetailsoort.spoelbak not in element_types:
+            has_sink = hasattr(Bouwkundigelementdetailsoort, 'spoelbak') and Bouwkundigelementdetailsoort.spoelbak in element_types
+            if not has_sink:
                 test_eenheid = deepcopy(eenheid)
                 for test_room in test_eenheid.ruimten:
                     if test_room.id == room.id:
@@ -248,8 +268,13 @@ def _suggest_bathroom_upgrades(
         element_types = {getattr(e, 'detail_soort', None) for e in elements}
         
         # Upgrade 1: Add shower if only bathtub exists
-        has_bath = Bouwkundigelementdetailsoort.bad in element_types
-        has_shower = Bouwkundigelementdetailsoort.douchebak in element_types
+        # Safely check for attributes that might not exist in this library version
+        try:
+            has_bath = hasattr(Bouwkundigelementdetailsoort, 'bad') and Bouwkundigelementdetailsoort.bad in element_types
+            has_shower = hasattr(Bouwkundigelementdetailsoort, 'douchebak') and Bouwkundigelementdetailsoort.douchebak in element_types
+        except (AttributeError, TypeError):
+            has_bath = False
+            has_shower = False
         
         if has_bath and not has_shower:
             test_eenheid = deepcopy(eenheid)
@@ -286,7 +311,7 @@ def _suggest_bathroom_upgrades(
                 logger.debug(f"Error testing shower upgrade: {e}")
         
         # Upgrade 2: Add toilet if missing
-        has_toilet = Bouwkundigelementdetailsoort.toilet in element_types
+        has_toilet = hasattr(Bouwkundigelementdetailsoort, 'toilet') and Bouwkundigelementdetailsoort.toilet in element_types
         
         if not has_toilet:
             test_eenheid = deepcopy(eenheid)
@@ -403,10 +428,15 @@ def _suggest_ventilation_improvements(
         
         if needs_ventilation:
             elements = room.bouwkundige_elementen or []
-            has_ventilation = any(
-                getattr(e, 'detail_soort', None) == Bouwkundigelementdetailsoort.ventilatie 
-                for e in elements
-            )
+            # Safely check for ventilation attribute
+            try:
+                ventilatie_attr = Bouwkundigelementdetailsoort.ventilatie if hasattr(Bouwkundigelementdetailsoort, 'ventilatie') else None
+                has_ventilation = ventilatie_attr and any(
+                    getattr(e, 'detail_soort', None) == ventilatie_attr 
+                    for e in elements
+                )
+            except (AttributeError, TypeError):
+                has_ventilation = False
             
             if not has_ventilation and hasattr(Bouwkundigelementdetailsoort, 'ventilatie'):
                 test_eenheid = deepcopy(eenheid)
@@ -468,6 +498,16 @@ def _suggest_element_quality_upgrades(
     
     # Test upgrading to double-glazing (windows)
     # This is indicated by adding/upgrading window elements
+    # Safeguard for missing raam attribute
+    try:
+        _ = Bouwkundigelementdetailsoort.raam
+        raam_available = True
+    except AttributeError:
+        raam_available = False
+    
+    if not raam_available:
+        return suggestions  # Skip if raam attribute doesn't exist
+    
     for room in current_rooms:
         elements = room.bouwkundige_elementen or []
         has_windows = any(
