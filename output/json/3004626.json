@@ -1,0 +1,190 @@
+{
+  "id": "3004626",
+  "woningwaarderingstelsel": {
+    "code": "ZEL",
+    "naam": "Zelfstandige woonruimte"
+  },
+  "ruimten": [
+    {
+      "id": "0.07.387",
+      "naam": "slaapkamer 2",
+      "soort": {
+        "code": "VTK",
+        "naam": "Vertrek"
+      },
+      "detailSoort": {
+        "code": "SLA",
+        "naam": "Slaapkamer"
+      },
+      "oppervlakte": 6.21,
+      "verwarmd": true,
+      "inhoud": 15.15,
+      "hoogte": 2.44,
+      "afsluitbaar": true
+    },
+    {
+      "id": "0.07.388",
+      "naam": "slaapkamer 1",
+      "soort": {
+        "code": "VTK",
+        "naam": "Vertrek"
+      },
+      "detailSoort": {
+        "code": "SLA",
+        "naam": "Slaapkamer"
+      },
+      "oppervlakte": 11.18,
+      "verwarmd": true,
+      "inhoud": 27.25,
+      "hoogte": 2.44,
+      "afsluitbaar": true
+    },
+    {
+      "id": "0.07.389",
+      "naam": "entree",
+      "soort": {
+        "code": "VRK",
+        "naam": "Verkeersruimte"
+      },
+      "detailSoort": {
+        "code": "HAL",
+        "naam": "Hal"
+      },
+      "oppervlakte": 10.36,
+      "verwarmd": false,
+      "inhoud": 25.25,
+      "hoogte": 2.44,
+      "afsluitbaar": false
+    },
+    {
+      "id": "0.07.390",
+      "naam": "badkamer",
+      "soort": {
+        "code": "VTK",
+        "naam": "Vertrek"
+      },
+      "detailSoort": {
+        "code": "BAD",
+        "naam": "Badruimte"
+      },
+      "oppervlakte": 5.09,
+      "verwarmd": true,
+      "inhoud": 12.41,
+      "hoogte": 2.44,
+      "afsluitbaar": true,
+      "installaties": [
+        {
+          "code": "DOU",
+          "naam": "Douche"
+        },
+        {
+          "code": "WAS",
+          "naam": "Wastafel"
+        }
+      ]
+    },
+    {
+      "id": "0.07.391",
+      "naam": "technische ruimte",
+      "soort": {
+        "code": "OVR",
+        "naam": "Overige ruimtes"
+      },
+      "detailSoort": {
+        "code": "TEC",
+        "naam": "Technische ruimte"
+      },
+      "oppervlakte": 4.13,
+      "verwarmd": false,
+      "inhoud": 10.06,
+      "hoogte": 2.44,
+      "afsluitbaar": false
+    },
+    {
+      "id": "0.07.393",
+      "naam": "woonkamer / keuken",
+      "soort": {
+        "code": "VTK",
+        "naam": "Vertrek"
+      },
+      "detailSoort": {
+        "code": "WOO",
+        "naam": "Woonkamer"
+      },
+      "oppervlakte": 27.88,
+      "verwarmd": true,
+      "inhoud": 67.98,
+      "hoogte": 2.44,
+      "afsluitbaar": true,
+      "bouwkundigeElementen": [
+        {
+          "id": "0.07.393_AAN",
+          "naam": "Aanrecht",
+          "soort": {
+            "code": "KEU",
+            "naam": "Keuken voorziening"
+          },
+          "detailSoort": {
+            "code": "AAN",
+            "naam": "Aanrecht"
+          },
+          "lengte": 2100
+        }
+      ]
+    }
+  ],
+  "bouwjaar": 2025,
+  "adres": {
+    "straatnaam": "Fascinatio Boulevard",
+    "huisnummer": "1478",
+    "postcode": "2909 VD",
+    "woonplaats": {
+      "naam": "CAPELLE AAN DEN IJSSEL"
+    }
+  },
+  "adresseerbaarObjectBasisregistratie": {
+    "id": "0502010000940776",
+    "bagIdentificatie": "0502010000940776"
+  },
+  "panden": [
+    {
+      "soort": {
+        "code": "MGW",
+        "naam": "Meergezinswoning"
+      }
+    }
+  ],
+  "klimaatbeheersing": [
+    {
+      "code": "IND",
+      "naam": "Individueel"
+    }
+  ],
+  "wozEenheden": [
+    {
+      "vastgesteldeWaarde": 195200.0,
+      "waardepeildatum": "2024-01-01"
+    }
+  ],
+  "energieprestaties": [
+    {
+      "label": {
+        "code": "A",
+        "naam": "A"
+      },
+      "soort": {
+        "code": "NTA",
+        "naam": "Energielabel conform NTA8800"
+      },
+      "waarde": "0.4",
+      "begindatum": "2025-01-01",
+      "einddatum": "2035-01-01",
+      "status": {
+        "code": "DEF",
+        "naam": "Definitief"
+      }
+    }
+  ],
+  "monumenten": [],
+  "gebruiksoppervlakte": 61
+}
