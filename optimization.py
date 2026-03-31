@@ -5,7 +5,6 @@ Focuses on space-efficient improvements within the existing building footprint.
 
 import logging
 from typing import List, Optional, Dict, Any
-from copy import deepcopy
 from datetime import date
 
 from woningwaardering import Woningwaardering
@@ -17,7 +16,6 @@ from woningwaardering.vera.bvg.generated import (
 from woningwaardering.vera.referentiedata import (
     Ruimtesoort,
     Ruimtedetailsoort,
-    Bouwkundigelementsoort,
 )
 
 from models import OptimizationSuggestion, OptimizationCategory
@@ -118,7 +116,7 @@ def _suggest_kitchen_upgrades(
             if aanrecht and aanrecht.lengte:
                 current_length = aanrecht.lengte
                 # Test upgrading counter (e.g., 150cm -> 195cm or better distribution)
-                test_eenheid = deepcopy(eenheid)
+                test_eenheid = eenheid.model_copy(deep=True)
                 for test_room in test_eenheid.ruimten:
                     if test_room.id == room.id and test_room.bouwkundige_elementen:
                         for test_elem in test_room.bouwkundige_elementen:
@@ -147,7 +145,7 @@ def _suggest_kitchen_upgrades(
             
             # Upgrade 2: Add built-in storage/cupboards
             if Bouwkundigelementdetailsoort.kast not in element_types:
-                test_eenheid = deepcopy(eenheid)
+                test_eenheid = eenheid.model_copy(deep=True)
                 for test_room in test_eenheid.ruimten:
                     if test_room.id == room.id:
                         if test_room.bouwkundige_elementen is None:
@@ -182,7 +180,7 @@ def _suggest_kitchen_upgrades(
             
             # Upgrade 3: Add sink if missing
             if Bouwkundigelementdetailsoort.spoelbak not in element_types:
-                test_eenheid = deepcopy(eenheid)
+                test_eenheid = eenheid.model_copy(deep=True)
                 for test_room in test_eenheid.ruimten:
                     if test_room.id == room.id:
                         if test_room.bouwkundige_elementen is None:
@@ -252,7 +250,7 @@ def _suggest_bathroom_upgrades(
         has_shower = Bouwkundigelementdetailsoort.douchebak in element_types
         
         if has_bath and not has_shower:
-            test_eenheid = deepcopy(eenheid)
+            test_eenheid = eenheid.model_copy(deep=True)
             for test_room in test_eenheid.ruimten:
                 if test_room.id == bathroom.id:
                     if test_room.bouwkundige_elementen is None:
@@ -289,7 +287,7 @@ def _suggest_bathroom_upgrades(
         has_toilet = Bouwkundigelementdetailsoort.toilet in element_types
         
         if not has_toilet:
-            test_eenheid = deepcopy(eenheid)
+            test_eenheid = eenheid.model_copy(deep=True)
             for test_room in test_eenheid.ruimten:
                 if test_room.id == bathroom.id:
                     if test_room.bouwkundige_elementen is None:
@@ -343,7 +341,7 @@ def _suggest_heating_improvements(
     # Find unheated rooms
     for room in current_rooms:
         if not room.verwarmd:
-            test_eenheid = deepcopy(eenheid)
+            test_eenheid = eenheid.model_copy(deep=True)
             for test_room in test_eenheid.ruimten:
                 if test_room.id == room.id:
                     test_room.verwarmd = True
@@ -409,7 +407,7 @@ def _suggest_ventilation_improvements(
             )
             
             if not has_ventilation and hasattr(Bouwkundigelementdetailsoort, 'ventilatie'):
-                test_eenheid = deepcopy(eenheid)
+                test_eenheid = eenheid.model_copy(deep=True)
                 for test_room in test_eenheid.ruimten:
                     if test_room.id == room.id:
                         if test_room.bouwkundige_elementen is None:
@@ -477,7 +475,7 @@ def _suggest_element_quality_upgrades(
         
         # If room has no window element, test adding better ones
         if not has_windows and hasattr(Bouwkundigelementdetailsoort, 'raam'):
-            test_eenheid = deepcopy(eenheid)
+            test_eenheid = eenheid.model_copy(deep=True)
             for test_room in test_eenheid.ruimten:
                 if test_room.id == room.id:
                     if test_room.bouwkundige_elementen is None:
@@ -533,7 +531,7 @@ def _suggest_energy_efficiency_improvements(
         current_label = energieprestaties[-1].label if energieprestaties else None
         
         if current_label and current_label != "A":
-            test_eenheid = deepcopy(eenheid)
+            test_eenheid = eenheid.model_copy(deep=True)
             
             # Simulate improving to better label
             from woningwaardering.vera.referentiedata import Energielabel
