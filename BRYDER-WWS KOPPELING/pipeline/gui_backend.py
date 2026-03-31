@@ -200,11 +200,11 @@ class PipelineBackend:
     def save_csv(self, csv_type: str, df: pd.DataFrame):
         """Save a CSV file."""
         if csv_type == "eenheden":
-            df.to_csv(EENHEDEN_CSV, delimiter=";", index=False, encoding="utf-8-sig")
+            df.to_csv(EENHEDEN_CSV, sep=";", index=False, encoding="utf-8-sig")
         elif csv_type == "ruimten":
-            df.to_csv(RUIMTEN_CSV, delimiter=";", index=False, encoding="utf-8-sig")
+            df.to_csv(RUIMTEN_CSV, sep=";", index=False, encoding="utf-8-sig")
         elif csv_type == "mapping":
-            df.to_csv(MAPPING_CSV, delimiter=";", index=False, encoding="utf-8-sig")
+            df.to_csv(MAPPING_CSV, sep=";", index=False, encoding="utf-8-sig")
         else:
             raise ValueError(f"Unknown CSV type: {csv_type}")
     
