@@ -17,6 +17,7 @@ from woningwaardering.vera.bvg.generated import (
 from woningwaardering.vera.referentiedata import (
     Ruimtesoort,
     Ruimtedetailsoort,
+    Bouwkundigelementsoort,
 )
 
 from models import OptimizationSuggestion, OptimizationCategory

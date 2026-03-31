@@ -1,0 +1,58 @@
+code,naam,parent_code,parent_naam
+ATR,Atrium / Patio,BTR,Buitenruimte
+ATU,Achtertuin,BTR,Buitenruimte
+BAD,Badkamer,VTK,Vertrek
+BAL,Balkon,BTR,Buitenruimte
+BAT,Badkamer met toilet,VTK,Vertrek
+BEG,Bergruimte,OVR,Overige ruimten
+BER,Berging,OVR,Overige ruimten
+BIJ,Bijkeuken,OVR,Overige ruimten
+CAR,Carport,BTR,Buitenruimte
+CON,Containerruimte,OVR,Overige ruimten
+DAK,Dakterras,BTR,Buitenruimte
+DOU,Doucheruimte,VTK,Vertrek
+GAN,Gang,VRK,Verkeersruimte
+GAL,Galerij,VRK,Verkeersruimte
+GAR,Garage,OVR,Overige ruimten
+HAL,Hal,VRK,Verkeersruimte
+KAS,Kast,OVR,Overige ruimten
+KEL,Kelder,OVR,Overige ruimten
+KEU,Keuken,VTK,Vertrek
+LIF,Liftschacht,VRK,Verkeersruimte
+MET,Meterruimte,OVR,Overige ruimten
+OBU,Overige buitenruimte,BTR,Buitenruimte
+ORU,Overige ruimte,OVR,Overige ruimten
+OPN,Open parkeergarage niet specifieke plek,BTR,Buitenruimte
+OPS,Open parkeergarage specifieke plek,BTR,Buitenruimte
+OVE,Overloop,VRK,Verkeersruimte
+OVT,Overig vertrek,VTK,Vertrek
+PAR,Parkeerplaats,BTR,Buitenruimte
+PNS,Parkeergarage niet specifieke plek,OVR,Overige ruimten
+PSP,Specifieke parkeerplek in parkeergarage,OVR,Overige ruimten
+REC,Recreatieruimte,GEM,Gemeenschappelijke ruimten en voorzieningen
+RON,Tuin Rondom,BTR,Buitenruimte
+SCA,Schacht,OVR,Overige ruimten
+SCH,Schuur,OVR,Overige ruimten
+SER,Serre,VTK,Vertrek
+SLA,Slaapkamer,VTK,Vertrek
+TEC,Technische ruimte,OVR,Overige ruimten
+TER,Terras,BTR,Buitenruimte
+TOI,Toiletruimte,OVR,Overige ruimten
+TUI,Tuin,BTR,Buitenruimte
+TUS,Tussenkamer,VTK,Vertrek
+VLI,Vliering,OVR,Overige ruimten
+VTU,Voortuin,BTR,Buitenruimte
+WAS,Wasruimte,OVR,Overige ruimten
+WOK,Woonkamer/keuken,VTK,Vertrek
+WOO,Woonkamer,VTK,Vertrek
+WSL,Woon-/slaapkamer,VTK,Vertrek
+WSK,Woon-/slaapkamer/keuken,VTK,Vertrek
+ZIJ,Zijtuin,BTR,Buitenruimte
+LOG,Loggia,BTR,Buitenruimte
+ZOL,Zolder,OVR,Overige ruimten
+ZVT,Zoldervertrek,VTK,Vertrek
+ENT,Entree,VRK,Verkeersruimte
+TRH,Trappenhuis,VRK,Verkeersruimte
+PIP,Parkeerplek in inpandige afgesloten parkeergarage,GEM,Gemeenschappelijke ruimten en voorzieningen
+PUP,Parkeerplek in uitpandige afgesloten parkeergarage,GEM,Gemeenschappelijke ruimten en voorzieningen
+PBC,Parkeerplek buiten behorend bij complex,GEM,Gemeenschappelijke ruimten en voorzieningen

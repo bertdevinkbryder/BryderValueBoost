@@ -27,82 +27,81 @@ from woningwaardering.vera.referentiedata import (
 API_URL = "http://localhost:8000"
 
 SIMPLE = {
-    "eenheid_data": {
-        "id": "example_001",
-        "bouwjaar": 1924,
-        "woningwaarderingstelsel": {"code": "ZEL"},
-        "adres": {
-            "straatnaam": "Examplestraat",
-            "huisnummer": "1",
-            "huisnummer_toevoeging": "",
-            "postcode": "3012AB",
-            "woonplaats": {"naam": "Rotterdam"}
-        },
-        "adresseerbaar_object_basisregistratie": {
-            "id": "0599010000485697",
-            "bag_identificatie": "0599010000485697"
-        },
-        
-        "panden": [
-            {
-                "soort": {"code": "EGW"}   # Eengezinswoning
-            }
-        ],
-
-
-        "woz_eenheden": [
-            {
-                "waardepeildatum": "2024-01-01",
-                "vastgestelde_waarde": 694000
-            }
-        ],
-
-        "energieprestaties": [
-            {
-                "soort": {"code": "EI"},
-                "status": {"code": "DEFINITIEF"},
-                "begindatum": "2019-02-25",
-                "einddatum": "2029-02-25",
-                "registratiedatum": "2019-02-26T14:51:38+01:00",
-                "label": {"code": "C"},
-                "waarde": "1.58"
-            }
-        ],
-
-        "gebruiksoppervlakte": 187,
-        "monumenten": [],
-
-        "ruimten": [
-            {
-                "id": "room_bedroom_1",
-                "soort": {"code": "VT"},
-                "detail_soort": {"code": "SK"},
-                "naam": "Slaapkamer",
-                "inhoud": 60.4,
-                "oppervlakte": 21.0,
-                "verwarmd": True
-            },
-            {
-                "id": "room_kitchen_1",
-                "soort": {"code": "VT"},
-                "detail_soort": {"code": "KK"},
-                "naam": "Keuken",
-                "inhoud": 57.4,
-                "oppervlakte": 20.4,
-                "verwarmd": True,
-                "bouwkundige_elementen": [
-                    {
-                        "id": "elem_001",
-                        "naam": "Aanrecht",
-                        "omschrijving": "Aanrecht in Keuken",
-                        "soort": {"code": "VOORZIENING"},
-                        "detail_soort": {"code": "AANRECHT"},
-                        "lengte": 2700
-                    }
-                ]
-            }
-        ]
+"eenheid_data": {
+    "id": "test_unit_001",
+    "bouwjaar": 1980,
+    "gebruiksoppervlakte": 100,
+    "woningwaarderingstelsel": {"code": "ZEL"},
+    "adres": {
+        "straatnaam": "Teststraat",
+        "huisnummer": "1",
+        "postcode": "1234AB",
+        "woonplaats": {"naam": "Amsterdam"}
     },
+    "panden": [
+        {
+            "soort": { "code": "EGW" }
+        }
+    ],
+    "ruimten": [
+        {
+            "id": "bedroom_1",
+            "soort": { "code": "VTK" },
+            "detail_soort": { "code": "SLA" },
+            "naam": "Slaapkamer",
+            "oppervlakte": 15,
+            "inhoud": 37.5,
+            "verwarmd": True
+        },
+        {
+            "id": "kitchen_1",
+            "soort": { "code": "VTK" },
+            "detail_soort": { "code": "KEU" },
+            "naam": "Keuken",
+            "oppervlakte": 10,
+            "inhoud": 25,
+            "verwarmd": True,
+            "bouwkundige_elementen": [
+                {
+                    "id": "elem_aanrecht_1",
+                    "naam": "Aanrecht",
+                    "omschrijving": "Aanrecht in keuken",
+                    "soort": { "code": "VOZ" },
+                    "detail_soort": { "code": "AAN" },
+                    "lengte": 1500
+                }
+            ]
+        }
+    ,
+        {
+            "id": "bathroom_1",
+            "soort": { "code": "VTK" },
+            "detail_soort": { "code": "BAD" },
+            "naam": "Badkamer",
+            "oppervlakte": 5,
+            "inhoud": 12.5,
+            "verwarmd": True
+        }
+    ],
+    "energieprestaties": [
+        {
+            "soort": {"code": "EI"},
+            "status": {"code": "DEFINITIEF"},
+            "begindatum": "2019-02-25",
+            "einddatum": "2029-02-25",
+            "registratiedatum": "2019-02-26T14:51:38+01:00",
+            "label": {"code": "C"},
+            "waarde": "1.58"
+        }
+    ],
+    "woz_eenheden": [
+        {
+            "waardepeildatum": "2024-01-01",
+            "vastgestelde_waarde": 350000
+        }
+    ],
+    "monumenten": []
+},
 
     "peildatum": str(date.today())
 }
