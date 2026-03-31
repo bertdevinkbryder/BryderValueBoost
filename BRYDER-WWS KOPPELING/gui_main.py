@@ -12,7 +12,7 @@ from io import StringIO
 import sys
 
 from pipeline.gui_backend import get_backend, PipelineBackend
-from pipeline.config import EENHEDEN_CSV, RUIMTEN_CSV, JSON_DIR
+from pipeline.config import EENHEDEN_CSV, RUIMTEN_CSV, MAPPING_CSV, JSON_DIR
 
 
 class PipelineGUI:
@@ -30,6 +30,9 @@ class PipelineGUI:
         # Setup UI
         self._setup_ui()
         self._update_status()
+        
+        # Auto-load existing data into editor and results tabs
+        self.root.after(100, self._auto_load_data)
     
     def _log_callback(self, message: str):
         """Callback for backend logging."""
@@ -43,7 +46,8 @@ class PipelineGUI:
     def _setup_ui(self):
         """Build the UI."""
         # Main notebook (tabs)
-        notebook = ttk.Notebook(self.root)
+        self.notebook = ttk.Notebook(self.root)
+        notebook = self.notebook
         notebook.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
         
         # Tab 1: Dashboard
@@ -124,39 +128,126 @@ class PipelineGUI:
         ttk.Button(control_frame, text="📥 Laad Ruimten", command=lambda: self._load_csv("ruimten", "tree_ruimten")).pack(side=tk.LEFT, padx=5)
         ttk.Button(control_frame, text="📥 Laad Koppelingen", command=lambda: self._load_csv("mapping", "tree_mapping")).pack(side=tk.LEFT, padx=5)
         
+        ttk.Separator(control_frame, orient=tk.VERTICAL).pack(side=tk.LEFT, fill=tk.Y, padx=10)
+        
+        ttk.Button(control_frame, text="💾 Opslaan Eenheden", command=lambda: self._save_edited_csv("eenheden", "tree_eenheden")).pack(side=tk.LEFT, padx=5)
+        ttk.Button(control_frame, text="💾 Opslaan Ruimten", command=lambda: self._save_edited_csv("ruimten", "tree_ruimten")).pack(side=tk.LEFT, padx=5)
+        ttk.Button(control_frame, text="💾 Opslaan Koppelingen", command=lambda: self._save_edited_csv("mapping", "tree_mapping")).pack(side=tk.LEFT, padx=5)
+        
+        # Hint
+        hint = ttk.Label(frame, text="💡 Dubbelklik op een cel om de waarde te bewerken.", foreground="gray")
+        hint.pack(anchor=tk.W, pady=(0, 5))
+        
         # Notebook for different CSVs
-        csv_notebook = ttk.Notebook(frame)
-        csv_notebook.pack(fill=tk.BOTH, expand=True)
+        self.csv_notebook = ttk.Notebook(frame)
+        self.csv_notebook.pack(fill=tk.BOTH, expand=True)
         
         # Eenheden tab
-        eenheden_frame = ttk.Frame(csv_notebook)
-        csv_notebook.add(eenheden_frame, text="Eenheden (161 woningen)")
-        self.tree_eenheden = self._build_tree_view(eenheden_frame)
+        eenheden_frame = ttk.Frame(self.csv_notebook)
+        self.csv_notebook.add(eenheden_frame, text="Eenheden")
+        self.tree_eenheden = self._build_tree_view(eenheden_frame, editable=True)
         
         # Ruimten tab
-        ruimten_frame = ttk.Frame(csv_notebook)
-        csv_notebook.add(ruimten_frame, text="Ruimten (495 kamers)")
-        self.tree_ruimten = self._build_tree_view(ruimten_frame)
+        ruimten_frame = ttk.Frame(self.csv_notebook)
+        self.csv_notebook.add(ruimten_frame, text="Ruimten")
+        self.tree_ruimten = self._build_tree_view(ruimten_frame, editable=True)
         
         # Mapping tab
-        mapping_frame = ttk.Frame(csv_notebook)
-        csv_notebook.add(mapping_frame, text="Koppelingen (66)")
-        self.tree_mapping = self._build_tree_view(mapping_frame)
+        mapping_frame = ttk.Frame(self.csv_notebook)
+        self.csv_notebook.add(mapping_frame, text="Koppelingen")
+        self.tree_mapping = self._build_tree_view(mapping_frame, editable=True)
     
-    def _build_tree_view(self, parent):
+    def _build_tree_view(self, parent, editable=False):
         """Create and return a Treeview widget."""
-        tree = ttk.Treeview(parent, height=25)
-        tree.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        container = ttk.Frame(parent)
+        container.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        
+        tree = ttk.Treeview(container, height=25)
+        tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         
         # Scrollbars
-        vsb = ttk.Scrollbar(parent, orient=tk.VERTICAL, command=tree.yview)
-        hsb = ttk.Scrollbar(parent, orient=tk.HORIZONTAL, command=tree.xview)
-        tree.configure(yscrollcommand=vsb.set, xscrollcommand=hsb.set)
-        
+        vsb = ttk.Scrollbar(container, orient=tk.VERTICAL, command=tree.yview)
         vsb.pack(side=tk.RIGHT, fill=tk.Y)
+        tree.configure(yscrollcommand=vsb.set)
+        
+        hsb = ttk.Scrollbar(parent, orient=tk.HORIZONTAL, command=tree.xview)
         hsb.pack(side=tk.BOTTOM, fill=tk.X)
+        tree.configure(xscrollcommand=hsb.set)
+        
+        if editable:
+            tree.bind("<Double-1>", lambda e: self._on_tree_double_click(e, tree))
         
         return tree
+    
+    def _on_tree_double_click(self, event, tree):
+        """Handle double-click on a Treeview cell to edit it inline."""
+        region = tree.identify("region", event.x, event.y)
+        if region != "cell":
+            return
+        
+        row_id = tree.identify_row(event.y)
+        column = tree.identify_column(event.x)
+        if not row_id or not column:
+            return
+        
+        # Get column index (Tkinter columns are like "#1", "#2", ...)
+        col_idx = int(column.replace("#", "")) - 1
+        columns = tree["columns"]
+        if col_idx < 0 or col_idx >= len(columns):
+            return
+        
+        # Get current value
+        current_values = tree.item(row_id, "values")
+        current_value = current_values[col_idx] if col_idx < len(current_values) else ""
+        
+        # Get cell bounding box
+        bbox = tree.bbox(row_id, column)
+        if not bbox:
+            return
+        
+        x, y, w, h = bbox
+        
+        # Create an Entry widget over the cell
+        entry = tk.Entry(tree, font=("TkDefaultFont",))
+        entry.place(x=x, y=y, width=w, height=h)
+        entry.insert(0, current_value)
+        entry.select_range(0, tk.END)
+        entry.focus_set()
+        
+        def commit(event=None):
+            new_value = entry.get()
+            values = list(tree.item(row_id, "values"))
+            values[col_idx] = new_value
+            tree.item(row_id, values=values)
+            entry.destroy()
+        
+        def cancel(event=None):
+            entry.destroy()
+        
+        entry.bind("<Return>", commit)
+        entry.bind("<Tab>", commit)
+        entry.bind("<Escape>", cancel)
+        entry.bind("<FocusOut>", commit)
+    
+    def _save_edited_csv(self, csv_type: str, tree_attr: str):
+        """Save the edited Treeview data back to CSV."""
+        try:
+            tree = getattr(self, tree_attr)
+            columns = list(tree["columns"])
+            
+            rows = []
+            for item in tree.get_children():
+                values = tree.item(item, "values")
+                rows.append(dict(zip(columns, values)))
+            
+            df = pd.DataFrame(rows, columns=columns)
+            self.backend.save_csv(csv_type, df)
+            self.current_dfs[tree_attr] = df
+            self._log_callback(f"✓ {csv_type}.csv opgeslagen ({len(df)} rijen)")
+            messagebox.showinfo("Opgeslagen", f"{csv_type}.csv is opgeslagen ({len(df)} rijen)")
+        except Exception as e:
+            messagebox.showerror("Fout", f"Kon {csv_type} niet opslaan: {e}")
+            self._log_callback(f"✗ Fout bij opslaan {csv_type}: {e}")
     
     def _build_results(self):
         """Build the results tab."""
@@ -225,6 +316,8 @@ class PipelineGUI:
                     f"- B2: {result['b2_apartments']} appartementen\n"
                     f"- B3: {result['b3_apartments']} appartementen")
                 self._update_status()
+                # Reload editor data after extraction
+                self.root.after(100, self._auto_load_data)
             else:
                 messagebox.showerror("Extractie Mislukt", result.get("error", "Onbekende fout"))
         
@@ -239,6 +332,8 @@ class PipelineGUI:
                 messagebox.showinfo("✓ JSON Conversie Voltooid",
                     f"{result['json_count']} eenheden naar JSON geconverteerd")
                 self._update_status()
+                # Reload results after JSON generation
+                self.root.after(100, self._auto_load_data)
             else:
                 messagebox.showerror("JSON Conversie Mislukt", result.get("error", "Onbekende fout"))
         
@@ -322,9 +417,197 @@ class PipelineGUI:
             values = [str(row[col])[:100] for col in df.columns]  # Truncate long values
             tree.insert("", tk.END, values=values)
     
+    def _auto_load_data(self):
+        """Automatically load all available data into the GUI on startup."""
+        status = self.backend.get_status()
+        
+        # --- Editor Tab: Load CSVs ---
+        if status["extract_done"]:
+            try:
+                df_e = self.backend.read_csv("eenheden")
+                self._display_in_tree(self.tree_eenheden, df_e)
+                self.current_dfs["tree_eenheden"] = df_e
+                self.csv_notebook.tab(0, text=f"Eenheden ({len(df_e)})")
+                self._log_callback(f"✓ eenheden.csv geladen ({len(df_e)} rijen)")
+            except Exception as e:
+                self._log_callback(f"⚠ Kon eenheden niet laden: {e}")
+            
+            try:
+                df_r = self.backend.read_csv("ruimten")
+                self._display_in_tree(self.tree_ruimten, df_r)
+                self.current_dfs["tree_ruimten"] = df_r
+                self.csv_notebook.tab(1, text=f"Ruimten ({len(df_r)})")
+                self._log_callback(f"✓ ruimten.csv geladen ({len(df_r)} rijen)")
+            except Exception as e:
+                self._log_callback(f"⚠ Kon ruimten niet laden: {e}")
+            
+            try:
+                df_m = self.backend.read_csv("mapping")
+                self._display_in_tree(self.tree_mapping, df_m)
+                self.current_dfs["tree_mapping"] = df_m
+                self.csv_notebook.tab(2, text=f"Koppelingen ({len(df_m)})")
+                self._log_callback(f"✓ mapping.csv geladen ({len(df_m)} rijen)")
+            except Exception as e:
+                self._log_callback(f"⚠ Kon mapping niet laden: {e}")
+        
+        # --- Results Tab: JSON preview + per-unit summary + statistics ---
+        if status["json_done"]:
+            # Populate JSON dropdown
+            self._refresh_json_preview()
+            # Select first JSON by default
+            if self.json_combo['values']:
+                self.json_combo.current(0)
+                self._display_json()
+            
+            # Build per-unit summary in scores tree
+            self._load_unit_summary()
+            
+            # Compute statistics
+            self._compute_statistics()
+    
+    def _load_unit_summary(self):
+        """Build a per-unit summary table showing key info per eenheid."""
+        try:
+            import json as jsonlib
+            
+            json_files = sorted(JSON_DIR.glob("*.json"))
+            if not json_files:
+                return
+            
+            rows = []
+            for jf in json_files:
+                with open(jf, encoding="utf-8") as f:
+                    data = jsonlib.load(f)
+                
+                eid = data.get("id", "")
+                adres = data.get("adres", {})
+                straat = adres.get("straatnaam", "")
+                huisnr = adres.get("huisnummer", "")
+                postcode = adres.get("postcode", "")
+                plaats = adres.get("woonplaats", {}).get("naam", "")
+                
+                ruimten = data.get("ruimten", [])
+                n_rooms = len(ruimten)
+                total_opp = sum(r.get("oppervlakte", 0) for r in ruimten)
+                n_vertrek = sum(1 for r in ruimten if r.get("soort", {}).get("code") == "VTK")
+                n_verkeer = sum(1 for r in ruimten if r.get("soort", {}).get("code") == "VRK")
+                n_overig = sum(1 for r in ruimten if r.get("soort", {}).get("code") == "OVR")
+                verwarmd_opp = sum(r.get("oppervlakte", 0) for r in ruimten if r.get("verwarmd"))
+                
+                bouwjaar = data.get("bouwjaar", "")
+                wws = data.get("woningwaarderingstelsel", {}).get("code", "")
+                
+                rows.append({
+                    "Eenheid ID": eid,
+                    "Adres": f"{straat} {huisnr}",
+                    "Postcode": postcode,
+                    "Plaats": plaats,
+                    "WWS": wws,
+                    "Bouwjaar": str(bouwjaar) if bouwjaar else "-",
+                    "Ruimten": n_rooms,
+                    "Vertrekken": n_vertrek,
+                    "Verkeers": n_verkeer,
+                    "Overig": n_overig,
+                    "Opp. (m²)": f"{total_opp:.1f}",
+                    "Verwarmd (m²)": f"{verwarmd_opp:.1f}",
+                })
+            
+            df_summary = pd.DataFrame(rows)
+            self._display_in_tree(self.tree_scores, df_summary)
+            self.current_dfs["tree_scores"] = df_summary
+            self._log_callback(f"✓ Overzicht geladen: {len(rows)} eenheden met ruimtedata")
+        except Exception as e:
+            self._log_callback(f"⚠ Kon overzicht niet laden: {e}")
+    
+    def _compute_statistics(self):
+        """Compute and display summary statistics from the JSON data."""
+        try:
+            import json as jsonlib
+            
+            json_files = sorted(JSON_DIR.glob("*.json"))
+            if not json_files:
+                return
+            
+            total_units = 0
+            total_rooms = 0
+            total_area = 0.0
+            total_heated_area = 0.0
+            room_type_counts = {}
+            detail_counts = {}
+            areas_per_unit = []
+            rooms_per_unit = []
+            
+            for jf in json_files:
+                with open(jf, encoding="utf-8") as f:
+                    data = jsonlib.load(f)
+                
+                total_units += 1
+                ruimten = data.get("ruimten", [])
+                unit_area = 0.0
+                rooms_per_unit.append(len(ruimten))
+                
+                for r in ruimten:
+                    total_rooms += 1
+                    opp = r.get("oppervlakte", 0)
+                    total_area += opp
+                    unit_area += opp
+                    if r.get("verwarmd"):
+                        total_heated_area += opp
+                    
+                    soort = r.get("soort", {}).get("naam", "Onbekend")
+                    room_type_counts[soort] = room_type_counts.get(soort, 0) + 1
+                    
+                    detail = r.get("detailSoort", {}).get("naam", "Onbekend")
+                    detail_counts[detail] = detail_counts.get(detail, 0) + 1
+                
+                areas_per_unit.append(unit_area)
+            
+            avg_area = total_area / total_units if total_units else 0
+            avg_rooms = total_rooms / total_units if total_units else 0
+            min_area = min(areas_per_unit) if areas_per_unit else 0
+            max_area = max(areas_per_unit) if areas_per_unit else 0
+            
+            lines = []
+            lines.append("=" * 60)
+            lines.append("  STATISTIEKEN OVERZICHT")
+            lines.append("=" * 60)
+            lines.append("")
+            lines.append(f"  Totaal eenheden:             {total_units}")
+            lines.append(f"  Totaal ruimten:              {total_rooms}")
+            lines.append(f"  Gemiddeld ruimten/eenheid:   {avg_rooms:.1f}")
+            lines.append("")
+            lines.append(f"  Totaal oppervlakte:          {total_area:.1f} m²")
+            lines.append(f"  Verwarmd oppervlakte:        {total_heated_area:.1f} m²")
+            lines.append(f"  Gem. oppervlakte/eenheid:    {avg_area:.1f} m²")
+            lines.append(f"  Min. oppervlakte:            {min_area:.1f} m²")
+            lines.append(f"  Max. oppervlakte:            {max_area:.1f} m²")
+            lines.append("")
+            lines.append("-" * 40)
+            lines.append("  RUIMTESOORTEN")
+            lines.append("-" * 40)
+            for soort, count in sorted(room_type_counts.items(), key=lambda x: -x[1]):
+                lines.append(f"    {soort:<30s} {count:>4d}")
+            lines.append("")
+            lines.append("-" * 40)
+            lines.append("  DETAIL RUIMTESOORTEN")
+            lines.append("-" * 40)
+            for detail, count in sorted(detail_counts.items(), key=lambda x: -x[1]):
+                lines.append(f"    {detail:<30s} {count:>4d}")
+            lines.append("")
+            lines.append("=" * 60)
+            
+            text = "\n".join(lines)
+            self.stats_view.configure(state=tk.NORMAL)
+            self.stats_view.delete(1.0, tk.END)
+            self.stats_view.insert(1.0, text)
+            self.stats_view.configure(state=tk.DISABLED)
+            self._log_callback("✓ Statistieken berekend")
+        except Exception as e:
+            self._log_callback(f"⚠ Kon statistieken niet berekenen: {e}")
+    
     def _go_to_editor(self):
-        """Switch to editor tab (no-op in single window)."""
-        pass
+        """Switch to editor tab."""
+        self.notebook.select(self.editor_tab)
     
     def _clear_log(self):
         """Clear log."""

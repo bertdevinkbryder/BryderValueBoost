@@ -171,7 +171,6 @@
       ]
     }
   ],
-  "bouwjaar": 2025,
   "adres": {
     "straatnaam": "Fascinatio Boulevard",
     "huisnummer": "1452",
@@ -192,37 +191,5 @@
       }
     }
   ],
-  "klimaatbeheersing": [
-    {
-      "code": "IND",
-      "naam": "Individueel"
-    }
-  ],
-  "wozEenheden": [
-    {
-      "vastgesteldeWaarde": 182400.0,
-      "waardepeildatum": "2024-01-01"
-    }
-  ],
-  "energieprestaties": [
-    {
-      "label": {
-        "code": "A",
-        "naam": "A"
-      },
-      "soort": {
-        "code": "NTA",
-        "naam": "Energielabel conform NTA8800"
-      },
-      "waarde": "0.4",
-      "begindatum": "2025-01-01",
-      "einddatum": "2035-01-01",
-      "status": {
-        "code": "DEF",
-        "naam": "Definitief"
-      }
-    }
-  ],
-  "monumenten": [],
-  "gebruiksoppervlakte": 57
+  "monumenten": []
 }
