@@ -24,6 +24,9 @@ from woningwaardering.vera.referentiedata import (
     Woningwaarderingstelsel,
 )
 
+
+# print(list(Bouwkundigelementsoort))
+# print(list(Bouwkundigelementdetailsoort))
 API_URL = "http://localhost:8000"
 
 SIMPLE = {

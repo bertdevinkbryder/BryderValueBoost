@@ -156,8 +156,8 @@ def _suggest_kitchen_upgrades(
                         cupboard = BouwkundigElementenBouwkundigElement(
                             id="kast_test",
                             naam="Kastopstelling",
-                            soort="opslagruimte",
-                            detail_soort=Bouwkundigelementdetailsoort.kast,
+                            soort={"code": "OVE"},
+                            detail_soort={"code": "KAST"},
                             lengte=2000
                         )
                         test_room.bouwkundige_elementen.append(cupboard)
@@ -189,10 +189,10 @@ def _suggest_kitchen_upgrades(
                             test_room.bouwkundige_elementen = []
                         
                         sink = BouwkundigElementenBouwkundigElement(
-                            id="sink_test",
+                            id="spoelbak_test",
                             naam="Spoelbak",
-                            soort="voorziening",
-                            detail_soort=Bouwkundigelementdetailsoort.spoelbak,
+                            soort={"code": "VOO"},
+                            detail_soort={"code": "SPOELBAK"},
                             lengte=600
                         )
                         test_room.bouwkundige_elementen.append(sink)
@@ -261,8 +261,8 @@ def _suggest_bathroom_upgrades(
                     shower = BouwkundigElementenBouwkundigElement(
                         id="shower_test",
                         naam="Douchebak",
-                        soort="sanitair",
-                        detail_soort=Bouwkundigelementdetailsoort.douchebak,
+                        soort={"code": "VOO"},
+                        detail_soort={"code": "DOUCHEBAK"},
                         lengte=800
                     )
                     test_room.bouwkundige_elementen.append(shower)
@@ -298,8 +298,8 @@ def _suggest_bathroom_upgrades(
                     toilet = BouwkundigElementenBouwkundigElement(
                         id="toilet_test",
                         naam="Toilet",
-                        soort="sanitair",
-                        detail_soort=Bouwkundigelementdetailsoort.toilet,
+                        soort={"code": "VOO"},
+                        detail_soort={"code": "TOILET"},
                         lengte=600
                     )
                     test_room.bouwkundige_elementen.append(toilet)
@@ -418,8 +418,8 @@ def _suggest_ventilation_improvements(
                         ventilation = BouwkundigElementenBouwkundigElement(
                             id="ventilation_test",
                             naam="Ventilatie",
-                            soort="installatie",
-                            detail_soort=Bouwkundigelementdetailsoort.ventilatie,
+                            soort={"code": "OVE"},
+                            detail_soort={"code": "VENTILATIE"},
                             lengte=100
                         )
                         test_room.bouwkundige_elementen.append(ventilation)
@@ -486,8 +486,8 @@ def _suggest_element_quality_upgrades(
                     window = BouwkundigElementenBouwkundigElement(
                         id="window_test",
                         naam="Raam (dubbel glas)",
-                        soort="constructie",
-                        detail_soort=Bouwkundigelementdetailsoort.raam,
+                        soort={"code": "OVE"},
+                        detail_soort={"code": "RAAM"},
                         lengte=1200
                     )
                     test_room.bouwkundige_elementen.append(window)

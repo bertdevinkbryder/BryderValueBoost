@@ -1,0 +1,6 @@
+code,naam,parent_code,parent_naam
+AAN,Aanrecht,VOO,Voorziening
+AFD,Afdekker,VOO,Voorziening
+ARM,Armatuur,VOO,Voorziening
+BAD,Bad,VOO,Voorziening
+BLK,Balk,VOO,Voorziening
