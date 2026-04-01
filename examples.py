@@ -226,6 +226,149 @@ OPTIMIZATION_READY = {
     "peildatum": str(date.today())
 }
 
+# Real-world example from actual VERA data
+REAL_WORLD = {
+    "eenheid_data": {
+        "id": "3004649",
+        "woningwaarderingstelsel": {"code": "ZEL"},
+        "ruimten": [
+            {
+                "id": "0.07.355",
+                "naam": "slaapkamer 2",
+                "soort": {"code": "VTK"},
+                "detail_soort": {"code": "SLA"},
+                "oppervlakte": 5.97,
+                "verwarmd": True,
+                "inhoud": 14.57,
+                "hoogte": 2.44,
+                "afsluitbaar": True
+            },
+            {
+                "id": "0.07.356",
+                "naam": "slaapkamer 1",
+                "soort": {"code": "VTK"},
+                "detail_soort": {"code": "SLA"},
+                "oppervlakte": 11.16,
+                "verwarmd": True,
+                "inhoud": 27.2,
+                "hoogte": 2.44,
+                "afsluitbaar": True
+            },
+            {
+                "id": "0.07.357",
+                "naam": "hal",
+                "soort": {"code": "VRK"},
+                "detail_soort": {"code": "HAL"},
+                "oppervlakte": 6.97,
+                "verwarmd": True,
+                "inhoud": 17.0,
+                "hoogte": 2.44,
+                "afsluitbaar": False
+            },
+            {
+                "id": "0.07.358",
+                "naam": "MK warm",
+                "soort": {"code": "OVR"},
+                "detail_soort": {"code": "MET"},
+                "oppervlakte": 0.28,
+                "verwarmd": False,
+                "inhoud": 0.69,
+                "hoogte": 2.44,
+                "afsluitbaar": False
+            },
+            {
+                "id": "0.07.359",
+                "naam": "MK koud",
+                "soort": {"code": "OVR"},
+                "detail_soort": {"code": "MET"},
+                "oppervlakte": 0.28,
+                "verwarmd": False,
+                "inhoud": 0.69,
+                "hoogte": 2.44,
+                "afsluitbaar": False
+            },
+            {
+                "id": "0.07.360",
+                "naam": "berging/techniek",
+                "soort": {"code": "OVR"},
+                "detail_soort": {"code": "BER"},
+                "oppervlakte": 4.54,
+                "verwarmd": False,
+                "inhoud": 11.06,
+                "hoogte": 2.44,
+                "afsluitbaar": False
+            },
+            {
+                "id": "0.07.361",
+                "naam": "woonkamer / keuken",
+                "soort": {"code": "VTK"},
+                "detail_soort": {"code": "WOO"},
+                "oppervlakte": 27.0,
+                "verwarmd": True,
+                "inhoud": 65.84,
+                "hoogte": 2.44,
+                "afsluitbaar": True,
+                "bouwkundige_elementen": [
+                    {
+                        "id": "0.07.361_AAN",
+                        "naam": "Aanrecht",
+                        "soort": {"code": "VOO"},
+                        "detail_soort": {"code": "AAN"},
+                        "lengte": 2100
+                    }
+                ]
+            },
+            {
+                "id": "0.07.362",
+                "naam": "badkamer/toilet",
+                "soort": {"code": "VTK"},
+                "detail_soort": {"code": "BAD"},
+                "oppervlakte": 6.04,
+                "verwarmd": True,
+                "inhoud": 14.73,
+                "hoogte": 2.44,
+                "afsluitbaar": True,
+                "bouwkundige_elementen": [
+                    {
+                        "id": "0.07.362_DOU",
+                        "naam": "Douche",
+                        "soort": {"code": "VOO"},
+                        "detail_soort": {"code": "DOU"},
+                        "lengte": 800
+                    },
+                    {
+                        "id": "0.07.362_WAS",
+                        "naam": "Wastafel",
+                        "soort": {"code": "VOO"},
+                        "detail_soort": {"code": "WAS"},
+                        "lengte": 600
+                    },
+                    {
+                        "id": "0.07.362_CLO",
+                        "naam": "Toilet",
+                        "soort": {"code": "VOO"},
+                        "detail_soort": {"code": "CLO"},
+                        "lengte": 600
+                    }
+                ]
+            }
+        ],
+        "adres": {
+            "straatnaam": "Fascinatio Boulevard",
+            "huisnummer": "1524",
+            "postcode": "2909 VD",
+            "woonplaats": {"naam": "CAPELLE AAN DEN IJSSEL"}
+        },
+        "panden": [
+            {
+                "soort": {"code": "MGW"}
+            }
+        ],
+        "monumenten": []
+    },
+    "peildatum": str(date.today())
+}
+
 
 def main():
     print("\n=== Woningwaardering API Examples ===\n")
@@ -242,9 +385,14 @@ def main():
     r = requests.get(f"{API_URL}/health")
     print(f"   Status: {r.status_code}\n")
 
+    # Test with real-world example
+    print("=" * 60)
+    print("Testing with Real-World Example (ID: 3004649)")
+    print("=" * 60 + "\n")
+
     # Calculate
     print("2. Calculate Score")
-    r = requests.post(f"{API_URL}/calculate", json=SIMPLE)
+    r = requests.post(f"{API_URL}/calculate", json=REAL_WORLD)
     result = r.json()
 
     if "error" in result or "detail" in result:
@@ -257,7 +405,7 @@ def main():
 
     # Optimize
     print("3. Find Improvements")
-    r = requests.post(f"{API_URL}/optimize", json=SIMPLE)
+    r = requests.post(f"{API_URL}/optimize", json=REAL_WORLD)
     result = r.json()
 
     if "error" in result or "detail" in result:
@@ -268,10 +416,11 @@ def main():
         print(f"   ✓ Found {count} improvement suggestions")
 
         if count > 0:
-            for i, sugg in enumerate(result["suggestions"][:3], 1):
+            for i, sugg in enumerate(result["suggestions"][:5], 1):
                 print(f"     {i}. {sugg.get('title')} (+{sugg.get('estimated_score_gain', 0):.1f})")
+        print()
 
-    print("\n✨ Examples completed!\n")
+    print("✨ Examples completed!\n")
 
 
 if __name__ == "__main__":
