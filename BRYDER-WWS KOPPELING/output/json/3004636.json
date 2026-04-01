@@ -133,6 +133,7 @@
       "afsluitbaar": false
     }
   ],
+  "bouwjaar": 2025,
   "adres": {
     "straatnaam": "Fascinatio Boulevard",
     "huisnummer": "1498",
@@ -142,8 +143,8 @@
     }
   },
   "adresseerbaarObjectBasisregistratie": {
-    "id": "0502010000940796",
-    "bagIdentificatie": "0502010000940796"
+    "id": "502010000940796",
+    "bagIdentificatie": "502010000940796"
   },
   "panden": [
     {
@@ -153,5 +154,38 @@
       }
     }
   ],
-  "monumenten": []
+  "klimaatbeheersing": [
+    {
+      "code": "IND",
+      "naam": "Individueel"
+    }
+  ],
+  "wozEenheden": [
+    {
+      "vastgesteldeWaarde": 259399.99999999997,
+      "waardepeildatum": "2025-01-01"
+    }
+  ],
+  "energieprestaties": [
+    {
+      "label": {
+        "code": "A",
+        "naam": "A"
+      },
+      "soort": {
+        "code": "EPE",
+        "naam": ""
+      },
+      "status": {
+        "code": "DEF",
+        "naam": "Definitief"
+      }
+    }
+  ],
+  "monumenten": [
+    {
+      "code": "NEE",
+      "naam": "NEE"
+    }
+  ]
 }

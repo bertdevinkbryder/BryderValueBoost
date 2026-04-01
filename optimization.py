@@ -77,19 +77,34 @@ def find_optimization_opportunities(
     suggestions: List[OptimizationSuggestion] = []
     
     # 1. Upgrade kitchen facilities (within existing kitchen space)
-    suggestions.extend(_suggest_kitchen_upgrades(eenheid, wws, peildatum))
+    try:
+        suggestions.extend(_suggest_kitchen_upgrades(eenheid, wws, peildatum))
+    except Exception as e:
+        logger.debug(f"Kitchen upgrades failed: {e}")
     
     # 2. Upgrade bathroom fixtures (within existing bathroom)
-    suggestions.extend(_suggest_bathroom_upgrades(eenheid, wws, peildatum))
+    try:
+        suggestions.extend(_suggest_bathroom_upgrades(eenheid, wws, peildatum))
+    except Exception as e:
+        logger.debug(f"Bathroom upgrades failed: {e}")
     
     # 3. Add heating to unheated rooms
-    suggestions.extend(_suggest_heating_improvements(eenheid, wws, peildatum))
+    try:
+        suggestions.extend(_suggest_heating_improvements(eenheid, wws, peildatum))
+    except Exception as e:
+        logger.debug(f"Heating improvements failed: {e}")
     
     # 4. Improve ventilation and air quality
-    suggestions.extend(_suggest_ventilation_improvements(eenheid, wws, peildatum))
+    try:
+        suggestions.extend(_suggest_ventilation_improvements(eenheid, wws, peildatum))
+    except Exception as e:
+        logger.debug(f"Ventilation improvements failed: {e}")
     
     # 5. Upgrade existing elements (windows, doors, insulation indicators)
-    suggestions.extend(_suggest_element_quality_upgrades(eenheid, wws, peildatum))
+    try:
+        suggestions.extend(_suggest_element_quality_upgrades(eenheid, wws, peildatum))
+    except Exception as e:
+        logger.debug(f"Element quality upgrades failed: {e}")
     
     # 6. Improve energy efficiency (better insulation, heating systems)
     suggestions.extend(_suggest_energy_efficiency_improvements(eenheid, wws, peildatum))
@@ -497,6 +512,16 @@ def _suggest_element_quality_upgrades(
     
     # Test upgrading to double-glazing (windows)
     # This is indicated by adding/upgrading window elements
+    # Safeguard for missing raam attribute
+    try:
+        _ = Bouwkundigelementdetailsoort.raam
+        raam_available = True
+    except AttributeError:
+        raam_available = False
+    
+    if not raam_available:
+        return suggestions  # Skip if raam attribute doesn't exist
+    
     for room in current_rooms:
         elements = room.bouwkundige_elementen or []
         has_windows = any(
